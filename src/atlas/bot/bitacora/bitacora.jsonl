@@ -1,0 +1,10 @@
+{"ts": 1771512713, "trade_id": "9d3d0bfe02", "event": "WAIT_GATILLO", "data": {"trade_id": "9d3d0bfe02", "symbol": "XAUUSDz", "tf": "M5", "side": "BUY", "zone_low": 1995.0, "zone_high": 2000.0, "message": "Plan congelado en zona"}}
+{"ts": 1771513421, "trade_id": "a68f6e6779", "event": "WAIT_GATILLO", "data": {"trade_id": "a68f6e6779", "symbol": "XAUUSDz", "tf": "M5", "side": "BUY", "zone_low": 1995.0, "zone_high": 2000.0, "message": "Plan congelado (DEMO)"}}
+{"ts": 1771513744, "trade_id": "1290e634fb", "event": "WAIT_GATILLO", "data": {"trade_id": "1290e634fb", "symbol": "XAUUSDz", "tf": "M5", "side": "BUY", "zone_low": 1995.0, "zone_high": 2000.0, "message": "Plan congelado (DEMO)"}}
+{"ts": 1771513750, "trade_id": "1290e634fb", "event": "SIGNAL", "data": {"trade_id": "1290e634fb", "symbol": "XAUUSDz", "tf": "M5", "side": "BUY", "entry": 2000.0, "sl": 1994.65, "tp1": 2005.35, "tp_final": 2010.7, "rr_planned": 2.0}}
+{"ts": 1771513754, "trade_id": "1290e634fb", "event": "IN_TRADE", "data": {"trade_id": "1290e634fb"}}
+{"ts": 1771513758, "trade_id": "1290e634fb", "event": "CLOSED", "data": {"reason": "TP_FINAL"}}
+{"ts": 1771517544, "trade_id": "52577561ce", "event": "WAIT_GATILLO", "data": {"trade_id": "52577561ce", "symbol": "XAUUSDz", "tf": "M5", "side": "BUY", "zone_low": 1995.0, "zone_high": 2000.0, "message": "Plan congelado en zona"}}
+{"ts": 1771517550, "trade_id": "52577561ce", "event": "NO_TRADE", "data": {"reason": "Salida de zona por lado incorrecto"}}
+{"ts": 1771518093, "trade_id": "2f32ddd4c8", "event": "WAIT_GATILLO", "data": {"trade_id": "2f32ddd4c8", "symbol": "XAUUSDz", "tf": "M5", "side": "BUY", "zone_low": 1995.0, "zone_high": 2000.0, "message": "Plan congelado en zona"}}
+{"ts": 1771518098, "trade_id": "2f32ddd4c8", "event": "NO_TRADE", "data": {"reason": "Salida de zona por lado incorrecto"}}

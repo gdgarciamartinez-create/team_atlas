@@ -1,0 +1,57 @@
+# src/atlas/api/routes/atlas.py
+from fastapi import APIRouter, Query, HTTPException
+from typing import Any, Dict, List
+
+from atlas.api.routes.mt5 import mt5_candles
+
+router = APIRouter()
+
+def _fib_levels(low: float, high: float) -> Dict[str, float]:
+    # Retrocesos desde high hacia low (si impulse up)
+    rng = high - low
+    if rng <= 0:
+        return {}
+    return {
+        "0.382": high - rng * 0.382,
+        "0.500": high - rng * 0.500,
+        "0.618": high - rng * 0.618,
+        "0.786": high - rng * 0.786,
+        "1.000": low,
+        "0.000": high,
+    }
+
+@router.get("/atlas/analysis")
+def atlas_analysis(
+    symbol: str = Query("XAUUSDz"),
+    tf: str = Query("M5"),
+    count: int = Query(200, ge=50, le=5000),
+) -> Dict[str, Any]:
+    payload = mt5_candles(symbol=symbol, tf=tf, count=count)
+    candles: List[Dict[str, Any]] = payload.get("candles", [])
+    if not candles:
+        raise HTTPException(status_code=400, detail="Sin velas para analizar.")
+
+    highs = [c["high"] for c in candles]
+    lows  = [c["low"] for c in candles]
+    closes = [c["close"] for c in candles]
+
+    hi = float(max(highs))
+    lo = float(min(lows))
+    last = float(closes[-1])
+    first = float(closes[0])
+
+    bias = "UP" if last >= first else "DOWN"
+    fib = _fib_levels(low=lo, high=hi)
+    # Para sesgo DOWN, fib igual sirve como mapa; la UI decide cómo dibujarlo.
+
+    return {
+        "ok": True,
+        "symbol": symbol,
+        "tf": tf,
+        "count": len(candles),
+        "bias": bias,
+        "range": {"low": lo, "high": hi},
+        "last_close": last,
+        "fib": fib,
+        "note": "Mapa rápido. 0.786 incluido como nivel óptimo. Sin gatillos ni ejecución.",
+    }

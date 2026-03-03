@@ -1,0 +1,34 @@
+{
+  "mode": "MT5",
+  "symbol": "XAUUSD",
+  "tf_exec": "M1",
+  "force_presesion_mode": "AUTO",
+  "params": {
+    "range_min_atr_mult": 1.2,
+    "gap_threshold": 0.0015,
+    "buffer_sweep_pct": 0.0005,
+    "buffer_sweep_atr_mult": 0.2,
+    "max_trades_per_window": 1,
+    "zone_low": "5000",
+    "zone_high": "5500"
+  },
+  "universe_rules": {
+    "include_prefixes": [
+      "EUR",
+      "USD"
+    ],
+    "exclude_contains": [
+      "BTC"
+    ]
+  },
+  "gap_menu": {
+    "enabled": true,
+    "xau_mode": "GAP",
+    "winter": {
+      "gap_window": "19:55-20:30"
+    },
+    "summer": {
+      "gap_window": "20:55-21:30"
+    }
+  }
+}

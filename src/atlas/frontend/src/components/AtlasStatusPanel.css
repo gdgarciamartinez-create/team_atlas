@@ -1,0 +1,255 @@
+:root {
+  --bg: #121212;
+  --card: #171717;
+  --border: #2a2a2a;
+  --text: #ededed;
+  --muted: #b9b9b9;
+
+  --wait: #2e2e2e;
+  --zona: #c58a00;
+  --buy: #1f6f43;
+  --sell: #8a1f1f;
+}
+
+.atlasPanel {
+  display: grid;
+  gap: 12px;
+  color: var(--text);
+}
+
+.atlasHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.hdrDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--wait);
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.03);
+  flex: 0 0 auto;
+}
+
+.hdrText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 10px;
+  flex: 1;
+}
+
+.hdrTitle {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.hdrSide {
+  margin-left: 8px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.hdrSubtitle {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.hdrMeta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pill {
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+  color: var(--muted);
+}
+
+.pillOn { color: var(--text); }
+.pillOff { color: var(--muted); }
+
+.hdrWAIT .hdrDot { background: var(--wait); }
+.hdrZONA .hdrDot { background: var(--zona); }
+.hdrBUY .hdrDot { background: var(--buy); }
+.hdrSELL .hdrDot { background: var(--sell); }
+.hdrGATILLO .hdrDot { background: #6b6b6b; }
+
+.atlasCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.cardTitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.cardBody {
+  display: grid;
+  gap: 8px;
+}
+
+.bigLine {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.hint {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.kvGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.kv {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255,255,255,0.02);
+}
+
+.kvKey {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.kvVal {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.zoneRow {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 1.6fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.zoneBox {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255,255,255,0.02);
+}
+
+.zoneLabel {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.zoneValue {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.zoneValue.buy { color: #7fe0a9; }
+.zoneValue.sell { color: #ff9a9a; }
+
+.miniRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.mini {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 6px 8px;
+  border: 1px dashed rgba(255,255,255,0.10);
+  border-radius: 999px;
+}
+
+.signalGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.sigBox {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255,255,255,0.02);
+}
+
+.sigLabel {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.sigValue {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.sigBig {
+  border-color: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.04);
+}
+
+.sigValueBig {
+  font-size: 18px;
+}
+
+.logBox {
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(0,0,0,0.20);
+}
+
+.logLine {
+  font-size: 11px;
+  padding: 4px 0;
+  border-bottom: 1px dotted rgba(255,255,255,0.06);
+}
+
+.logLine:last-child { border-bottom: none; }
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.errorCard {
+  border-color: rgba(255, 120, 120, 0.25);
+}

@@ -1,0 +1,10 @@
+{
+  "name": "ui-legacy-disabled",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "node -e \"console.error('❌ UI LEGACY (Scanner) DESACTIVADA — usar TEAM ATLAS UI'); process.exit(1)\"",
+    "build": "node -e \"console.error('❌ UI LEGACY (Scanner) DESACTIVADA — usar TEAM ATLAS UI'); process.exit(1)\"",
+    "preview": "node -e \"console.error('❌ UI LEGACY (Scanner) DESACTIVADA — usar TEAM ATLAS UI'); process.exit(1)\""
+  }
+}

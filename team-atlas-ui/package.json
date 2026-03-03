@@ -1,0 +1,10 @@
+{
+  "name": "src-root-disabled",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "node -e \"console.error('❌ ERROR: Estás en /src (Backend). El frontend está en /frontend'); process.exit(1)\"",
+    "build": "node -e \"console.error('❌ ERROR: Estás en /src (Backend). El frontend está en /frontend'); process.exit(1)\"",
+    "preview": "node -e \"console.error('❌ ERROR: Estás en /src (Backend). El frontend está en /frontend'); process.exit(1)\""
+  }
+}

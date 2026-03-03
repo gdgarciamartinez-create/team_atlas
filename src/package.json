@@ -1,0 +1,10 @@
+{
+  "name": "backend-root-only",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "node -e \"console.error('❌ ERROR: Estás en /src (Backend Root). El frontend real está en /src/atlas/frontend'); process.exit(1)\"",
+    "build": "node -e \"console.error('❌ ERROR: Estás en /src (Backend Root). El frontend real está en /src/atlas/frontend'); process.exit(1)\"",
+    "preview": "node -e \"console.error('❌ ERROR: Estás en /src (Backend Root). El frontend real está en /src/atlas/frontend'); process.exit(1)\""
+  }
+}

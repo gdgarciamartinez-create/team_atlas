@@ -1,0 +1,2724 @@
+{
+  "ok": true,
+  "root_dir": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data",
+  "summary": {
+    "files_total": 54,
+    "files_ok": 53,
+    "files_bad": 1
+  },
+  "results": [
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_H1.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_H1.csv",
+        "ok": true,
+        "rows": 44874,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 7216,
+        "touch_618": 5500,
+        "touch_786": 4489,
+        "continued": 5918,
+        "continued_when_touch_618": 4382,
+        "continued_when_touch_786": 3490
+      },
+      "rates_pct": {
+        "touch_618": 76.21951219512195,
+        "touch_786": 62.2089800443459,
+        "continued": 82.01219512195122,
+        "continued_given_618": 79.67272727272727,
+        "continued_given_786": 77.74560035642682
+      },
+      "ratio_quantiles": {
+        "q10": 0.42174278310862834,
+        "q25": 0.6242529585798802,
+        "q50": 0.9337805037717414,
+        "q75": 1.5312728089382948,
+        "q90": 2.518025143618363
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 3610,
+          "touch_786_pct": 61.38504155124654,
+          "continued_pct": 82.99168975069252
+        },
+        "DOWN": {
+          "legs": 3606,
+          "touch_786_pct": 63.03383250138658,
+          "continued_pct": 81.03161397670549
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_H4.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_H4.csv",
+        "ok": true,
+        "rows": 11220,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 1812,
+        "touch_618": 1345,
+        "touch_786": 1115,
+        "continued": 1498,
+        "continued_when_touch_618": 1067,
+        "continued_when_touch_786": 862
+      },
+      "rates_pct": {
+        "touch_618": 74.22737306843267,
+        "touch_786": 61.53421633554084,
+        "continued": 82.6710816777042,
+        "continued_given_618": 79.33085501858736,
+        "continued_given_786": 77.30941704035874
+      },
+      "ratio_quantiles": {
+        "q10": 0.41481734133880516,
+        "q25": 0.6018826175540597,
+        "q50": 0.9529591248915918,
+        "q75": 1.557950085795346,
+        "q90": 2.600147836090898
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 907,
+          "touch_786_pct": 59.757442116868795,
+          "continued_pct": 84.34399117971334
+        },
+        "DOWN": {
+          "legs": 905,
+          "touch_786_pct": 63.31491712707182,
+          "continued_pct": 80.99447513812154
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_H8.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_H8.csv",
+        "ok": true,
+        "rows": 5610,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 886,
+        "touch_618": 678,
+        "touch_786": 558,
+        "continued": 727,
+        "continued_when_touch_618": 532,
+        "continued_when_touch_786": 429
+      },
+      "rates_pct": {
+        "touch_618": 76.52370203160271,
+        "touch_786": 62.979683972911964,
+        "continued": 82.05417607223477,
+        "continued_given_618": 78.46607669616519,
+        "continued_given_786": 76.88172043010752
+      },
+      "ratio_quantiles": {
+        "q10": 0.4132460409265861,
+        "q25": 0.6242115439786529,
+        "q50": 0.9558131363303124,
+        "q75": 1.5128451036196446,
+        "q90": 2.4613267022599263
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 443,
+          "touch_786_pct": 61.17381489841986,
+          "continued_pct": 84.19864559819413
+        },
+        "DOWN": {
+          "legs": 443,
+          "touch_786_pct": 64.78555304740406,
+          "continued_pct": 79.9097065462754
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_M1.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_M1.csv",
+        "ok": true,
+        "rows": 99820,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15509,
+        "touch_618": 11737,
+        "touch_786": 9723,
+        "continued": 12692,
+        "continued_when_touch_618": 9262,
+        "continued_when_touch_786": 7507
+      },
+      "rates_pct": {
+        "touch_618": 75.67863821007157,
+        "touch_786": 62.692630085756655,
+        "continued": 81.8363530853053,
+        "continued_given_618": 78.912839737582,
+        "continued_given_786": 77.20868044842126
+      },
+      "ratio_quantiles": {
+        "q10": 0.4262649019055748,
+        "q25": 0.6174213768507121,
+        "q50": 0.9609175065558899,
+        "q75": 1.5429726996969602,
+        "q90": 2.4499006528528997
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7754,
+          "touch_786_pct": 62.23884446737168,
+          "continued_pct": 82.17694093371163
+        },
+        "DOWN": {
+          "legs": 7755,
+          "touch_786_pct": 63.14635718891038,
+          "continued_pct": 81.49580915538363
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_M15.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_M15.csv",
+        "ok": true,
+        "rows": 99988,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15944,
+        "touch_618": 12219,
+        "touch_786": 9967,
+        "continued": 13084,
+        "continued_when_touch_618": 9732,
+        "continued_when_touch_786": 7756
+      },
+      "rates_pct": {
+        "touch_618": 76.636979427998,
+        "touch_786": 62.51254390366282,
+        "continued": 82.06221776216759,
+        "continued_given_618": 79.64645224650135,
+        "continued_given_786": 77.81679542490218
+      },
+      "ratio_quantiles": {
+        "q10": 0.4409384487043909,
+        "q25": 0.627474231505976,
+        "q50": 0.9391381715000294,
+        "q75": 1.5111840085942119,
+        "q90": 2.409576760624116
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7973,
+          "touch_786_pct": 60.67979430578202,
+          "continued_pct": 83.56954722187382
+        },
+        "DOWN": {
+          "legs": 7971,
+          "touch_786_pct": 64.34575335591519,
+          "continued_pct": 80.55451009910927
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_M30.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_M30.csv",
+        "ok": true,
+        "rows": 89742,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 14297,
+        "touch_618": 10942,
+        "touch_786": 8920,
+        "continued": 11773,
+        "continued_when_touch_618": 8754,
+        "continued_when_touch_786": 6989
+      },
+      "rates_pct": {
+        "touch_618": 76.53353850458139,
+        "touch_786": 62.39071133804295,
+        "continued": 82.34594670210534,
+        "continued_given_618": 80.00365563882288,
+        "continued_given_786": 78.35201793721973
+      },
+      "ratio_quantiles": {
+        "q10": 0.43281699065378165,
+        "q25": 0.6253589978612847,
+        "q50": 0.9308440508470465,
+        "q75": 1.5304467703023752,
+        "q90": 2.4412740173802177
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7148,
+          "touch_786_pct": 60.85618354784555,
+          "continued_pct": 83.17011751538892
+        },
+        "DOWN": {
+          "legs": 7149,
+          "touch_786_pct": 63.9250244789481,
+          "continued_pct": 81.52189117359072
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_M5.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\BTC\\BTCUSDz_M5.csv",
+        "ok": true,
+        "rows": 99964,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15586,
+        "touch_618": 12002,
+        "touch_786": 9828,
+        "continued": 12712,
+        "continued_when_touch_618": 9429,
+        "continued_when_touch_786": 7541
+      },
+      "rates_pct": {
+        "touch_618": 77.00500449121006,
+        "touch_786": 63.05658924675991,
+        "continued": 81.56037469523932,
+        "continued_given_618": 78.56190634894185,
+        "continued_given_786": 76.72975172975173
+      },
+      "ratio_quantiles": {
+        "q10": 0.44499032796975396,
+        "q25": 0.633463221123413,
+        "q50": 0.9594420675501643,
+        "q75": 1.514078947368449,
+        "q90": 2.3300052779732523
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7796,
+          "touch_786_pct": 62.0831195484864,
+          "continued_pct": 82.09338122113904
+        },
+        "DOWN": {
+          "legs": 7790,
+          "touch_786_pct": 64.03080872913992,
+          "continued_pct": 81.02695763799743
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_H1.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_H1.csv",
+        "ok": true,
+        "rows": 31836,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 4614,
+        "touch_618": 3411,
+        "touch_786": 2921,
+        "continued": 3819,
+        "continued_when_touch_618": 2715,
+        "continued_when_touch_786": 2278
+      },
+      "rates_pct": {
+        "touch_618": 73.92717815344604,
+        "touch_786": 63.30732553099263,
+        "continued": 82.76983094928478,
+        "continued_given_618": 79.59542656112576,
+        "continued_given_786": 77.9869907565902
+      },
+      "ratio_quantiles": {
+        "q10": 0.3594306049821932,
+        "q25": 0.5944700460829541,
+        "q50": 1.0012254901960864,
+        "q75": 1.6612244897958828,
+        "q90": 2.696428571428568
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 2307,
+          "touch_786_pct": 64.23927178153446,
+          "continued_pct": 82.09796272214997
+        },
+        "DOWN": {
+          "legs": 2307,
+          "touch_786_pct": 62.3753792804508,
+          "continued_pct": 83.44169917641959
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_H4.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_H4.csv",
+        "ok": true,
+        "rows": 8229,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 1252,
+        "touch_618": 960,
+        "touch_786": 787,
+        "continued": 1034,
+        "continued_when_touch_618": 763,
+        "continued_when_touch_786": 606
+      },
+      "rates_pct": {
+        "touch_618": 76.6773162939297,
+        "touch_786": 62.85942492012779,
+        "continued": 82.58785942492013,
+        "continued_given_618": 79.47916666666667,
+        "continued_given_786": 77.0012706480305
+      },
+      "ratio_quantiles": {
+        "q10": 0.414147909967847,
+        "q25": 0.6329442282749583,
+        "q50": 0.9657407407407422,
+        "q75": 1.6008869179600846,
+        "q90": 2.4612068965517095
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 625,
+          "touch_786_pct": 63.68,
+          "continued_pct": 81.76
+        },
+        "DOWN": {
+          "legs": 627,
+          "touch_786_pct": 62.0414673046252,
+          "continued_pct": 83.41307814992025
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_H8.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_H8.csv",
+        "ok": true,
+        "rows": 4272,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 597,
+        "touch_618": 453,
+        "touch_786": 377,
+        "continued": 487,
+        "continued_when_touch_618": 350,
+        "continued_when_touch_786": 288
+      },
+      "rates_pct": {
+        "touch_618": 75.87939698492463,
+        "touch_786": 63.14907872696818,
+        "continued": 81.57453936348409,
+        "continued_given_618": 77.2626931567329,
+        "continued_given_786": 76.39257294429709
+      },
+      "ratio_quantiles": {
+        "q10": 0.4340753424657488,
+        "q25": 0.6227988878591298,
+        "q50": 0.9752120026092599,
+        "q75": 1.5313469894475398,
+        "q90": 2.4184060721062646
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 298,
+          "touch_786_pct": 63.758389261744966,
+          "continued_pct": 79.86577181208054
+        },
+        "DOWN": {
+          "legs": 299,
+          "touch_786_pct": 62.541806020066886,
+          "continued_pct": 83.27759197324414
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_M1.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_M1.csv",
+        "ok": true,
+        "rows": 99820,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 11920,
+        "touch_618": 9134,
+        "touch_786": 7596,
+        "continued": 9531,
+        "continued_when_touch_618": 7000,
+        "continued_when_touch_786": 5678
+      },
+      "rates_pct": {
+        "touch_618": 76.62751677852349,
+        "touch_786": 63.7248322147651,
+        "continued": 79.95805369127517,
+        "continued_given_618": 76.63674184366104,
+        "continued_given_786": 74.74986835176409
+      },
+      "ratio_quantiles": {
+        "q10": 0.40909090909106965,
+        "q25": 0.6323529411763553,
+        "q50": 1.0,
+        "q75": 1.5384615384591735,
+        "q90": 2.4166666666665897
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 5962,
+          "touch_786_pct": 62.89835625628984,
+          "continued_pct": 80.2750754780275
+        },
+        "DOWN": {
+          "legs": 5958,
+          "touch_786_pct": 64.55186304128902,
+          "continued_pct": 79.64081906680094
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_M15.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_M15.csv",
+        "ok": true,
+        "rows": 99988,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 14420,
+        "touch_618": 10881,
+        "touch_786": 9114,
+        "continued": 11964,
+        "continued_when_touch_618": 8725,
+        "continued_when_touch_786": 7164
+      },
+      "rates_pct": {
+        "touch_618": 75.45769764216367,
+        "touch_786": 63.20388349514563,
+        "continued": 82.96809986130374,
+        "continued_given_618": 80.18564470177374,
+        "continued_given_786": 78.60434496379197
+      },
+      "ratio_quantiles": {
+        "q10": 0.39768339768336525,
+        "q25": 0.6156462585033682,
+        "q50": 0.9733333333333076,
+        "q75": 1.6056338028168133,
+        "q90": 2.551440329217938
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7212,
+          "touch_786_pct": 62.71491957848031,
+          "continued_pct": 83.153078202995
+        },
+        "DOWN": {
+          "legs": 7208,
+          "touch_786_pct": 63.693118756936734,
+          "continued_pct": 82.78301886792453
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_M3.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_M3.csv",
+        "ok": true,
+        "rows": 99940,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 13517,
+        "touch_618": 10392,
+        "touch_786": 8710,
+        "continued": 10959,
+        "continued_when_touch_618": 8113,
+        "continued_when_touch_786": 6637
+      },
+      "rates_pct": {
+        "touch_618": 76.88096471110454,
+        "touch_786": 64.43737515720944,
+        "continued": 81.07568247392173,
+        "continued_given_618": 78.06966897613549,
+        "continued_given_786": 76.19977037887486
+      },
+      "ratio_quantiles": {
+        "q10": 0.4238410596026597,
+        "q25": 0.6338797814206716,
+        "q50": 0.9876543209875764,
+        "q75": 1.537878787878784,
+        "q90": 2.3508771929824426
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 6759,
+          "touch_786_pct": 64.06273117325048,
+          "continued_pct": 81.23982837697885
+        },
+        "DOWN": {
+          "legs": 6758,
+          "touch_786_pct": 64.8120745782776,
+          "continued_pct": 80.91151228174016
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_M30.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_M30.csv",
+        "ok": true,
+        "rows": 63669,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 9245,
+        "touch_618": 6932,
+        "touch_786": 5850,
+        "continued": 7603,
+        "continued_when_touch_618": 5501,
+        "continued_when_touch_786": 4549
+      },
+      "rates_pct": {
+        "touch_618": 74.98107084910762,
+        "touch_786": 63.27744726879394,
+        "continued": 82.23904813412655,
+        "continued_given_618": 79.35660703981534,
+        "continued_given_786": 77.76068376068376
+      },
+      "ratio_quantiles": {
+        "q10": 0.37617554858932334,
+        "q25": 0.6096774193548452,
+        "q50": 0.9912280701754779,
+        "q75": 1.6312056737588463,
+        "q90": 2.6536312849159516
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 4622,
+          "touch_786_pct": 63.284292514063175,
+          "continued_pct": 81.58805711813068
+        },
+        "DOWN": {
+          "legs": 4623,
+          "touch_786_pct": 63.27060350421804,
+          "continued_pct": 82.88989833441488
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_M5.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\EURUSD\\EURUSDz_M5.csv",
+        "ok": true,
+        "rows": 99963,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 13982,
+        "touch_618": 10688,
+        "touch_786": 9003,
+        "continued": 11416,
+        "continued_when_touch_618": 8412,
+        "continued_when_touch_786": 6922
+      },
+      "rates_pct": {
+        "touch_618": 76.44113860678014,
+        "touch_786": 64.38992990988413,
+        "continued": 81.64783292805035,
+        "continued_given_618": 78.70508982035928,
+        "continued_given_786": 76.88548261690548
+      },
+      "ratio_quantiles": {
+        "q10": 0.4210526315791319,
+        "q25": 0.6312056737587882,
+        "q50": 0.982758620689543,
+        "q75": 1.5438596491229026,
+        "q90": 2.3728813559319546
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 6991,
+          "touch_786_pct": 63.81061364611644,
+          "continued_pct": 82.21999713917894
+        },
+        "DOWN": {
+          "legs": 6991,
+          "touch_786_pct": 64.96924617365184,
+          "continued_pct": 81.07566871692175
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_H1.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_H1.csv",
+        "ok": true,
+        "rows": 31891,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 4641,
+        "touch_618": 3429,
+        "touch_786": 2886,
+        "continued": 3828,
+        "continued_when_touch_618": 2718,
+        "continued_when_touch_786": 2246
+      },
+      "rates_pct": {
+        "touch_618": 73.88493859082094,
+        "touch_786": 62.18487394957983,
+        "continued": 82.48222365869425,
+        "continued_given_618": 79.26509186351706,
+        "continued_given_786": 77.82397782397783
+      },
+      "ratio_quantiles": {
+        "q10": 0.36910994764399885,
+        "q25": 0.5945485519591199,
+        "q50": 0.9914529914529672,
+        "q75": 1.6592592592590472,
+        "q90": 2.695121951219426
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 2321,
+          "touch_786_pct": 61.008186126669536,
+          "continued_pct": 82.33520034467902
+        },
+        "DOWN": {
+          "legs": 2320,
+          "touch_786_pct": 63.36206896551724,
+          "continued_pct": 82.62931034482759
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_H4.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_H4.csv",
+        "ok": true,
+        "rows": 8243,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 1254,
+        "touch_618": 961,
+        "touch_786": 801,
+        "continued": 1023,
+        "continued_when_touch_618": 759,
+        "continued_when_touch_786": 616
+      },
+      "rates_pct": {
+        "touch_618": 76.6347687400319,
+        "touch_786": 63.8755980861244,
+        "continued": 81.57894736842105,
+        "continued_given_618": 78.9802289281998,
+        "continued_given_786": 76.90387016229712
+      },
+      "ratio_quantiles": {
+        "q10": 0.424851530379163,
+        "q25": 0.6284513805522152,
+        "q50": 0.9774812343619689,
+        "q75": 1.587345254470417,
+        "q90": 2.2832929782082494
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 628,
+          "touch_786_pct": 65.28662420382166,
+          "continued_pct": 79.45859872611464
+        },
+        "DOWN": {
+          "legs": 626,
+          "touch_786_pct": 62.460063897763575,
+          "continued_pct": 83.70607028753993
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_H8.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_H8.csv",
+        "ok": true,
+        "rows": 8268,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 1257,
+        "touch_618": 963,
+        "touch_786": 803,
+        "continued": 1027,
+        "continued_when_touch_618": 761,
+        "continued_when_touch_786": 618
+      },
+      "rates_pct": {
+        "touch_618": 76.6109785202864,
+        "touch_786": 63.88225934765314,
+        "continued": 81.7024661893397,
+        "continued_given_618": 79.0238836967809,
+        "continued_given_786": 76.96139476961395
+      },
+      "ratio_quantiles": {
+        "q10": 0.4252336448598124,
+        "q25": 0.6284513805522152,
+        "q50": 0.9774812343619689,
+        "q75": 1.587345254470417,
+        "q90": 2.2832929782082494
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 629,
+          "touch_786_pct": 65.34181240063593,
+          "continued_pct": 79.3322734499205
+        },
+        "DOWN": {
+          "legs": 628,
+          "touch_786_pct": 62.4203821656051,
+          "continued_pct": 84.07643312101911
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_M1.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_M1.csv",
+        "ok": true,
+        "rows": 100000,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 12447,
+        "touch_618": 9513,
+        "touch_786": 7957,
+        "continued": 10014,
+        "continued_when_touch_618": 7366,
+        "continued_when_touch_786": 5997
+      },
+      "rates_pct": {
+        "touch_618": 76.42805495300072,
+        "touch_786": 63.92705069494657,
+        "continued": 80.4531212340323,
+        "continued_given_618": 77.4308840534006,
+        "continued_given_786": 75.36760085459343
+      },
+      "ratio_quantiles": {
+        "q10": 0.4166666666665125,
+        "q25": 0.6298701298700353,
+        "q50": 0.9866666666665799,
+        "q75": 1.5483870967741473,
+        "q90": 2.3592233009706103
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 6218,
+          "touch_786_pct": 63.62174332582824,
+          "continued_pct": 81.45706014795755
+        },
+        "DOWN": {
+          "legs": 6229,
+          "touch_786_pct": 64.23181891154279,
+          "continued_pct": 79.45095520950393
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_M3.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_M3.csv",
+        "ok": true,
+        "rows": 100000,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 13772,
+        "touch_618": 10604,
+        "touch_786": 8852,
+        "continued": 11222,
+        "continued_when_touch_618": 8313,
+        "continued_when_touch_786": 6761
+      },
+      "rates_pct": {
+        "touch_618": 76.99680511182109,
+        "touch_786": 64.27534127214638,
+        "continued": 81.48417078129538,
+        "continued_given_618": 78.394945303659,
+        "continued_given_786": 76.37821961138725
+      },
+      "ratio_quantiles": {
+        "q10": 0.42391304347836845,
+        "q25": 0.6376811594202105,
+        "q50": 0.987341772151817,
+        "q75": 1.533333333332988,
+        "q90": 2.3457943925230986
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 6886,
+          "touch_786_pct": 63.563752541388325,
+          "continued_pct": 81.70200406622132
+        },
+        "DOWN": {
+          "legs": 6886,
+          "touch_786_pct": 64.98693000290444,
+          "continued_pct": 81.26633749636945
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_M30.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_M30.csv",
+        "ok": true,
+        "rows": 63779,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 9314,
+        "touch_618": 7013,
+        "touch_786": 5926,
+        "continued": 7679,
+        "continued_when_touch_618": 5584,
+        "continued_when_touch_786": 4619
+      },
+      "rates_pct": {
+        "touch_618": 75.29525445565815,
+        "touch_786": 63.62465106291604,
+        "continued": 82.4457805454155,
+        "continued_given_618": 79.62355625267361,
+        "continued_given_786": 77.94465069186636
+      },
+      "ratio_quantiles": {
+        "q10": 0.38532110091743055,
+        "q25": 0.6156716417910977,
+        "q50": 0.9932659932659866,
+        "q75": 1.6008146639511256,
+        "q90": 2.6056338028168913
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 4656,
+          "touch_786_pct": 62.88659793814433,
+          "continued_pct": 82.1520618556701
+        },
+        "DOWN": {
+          "legs": 4658,
+          "touch_786_pct": 64.36238729068269,
+          "continued_pct": 82.73937312151138
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_M5.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\GBPUSD\\GBPUSDz_M5.csv",
+        "ok": true,
+        "rows": 100000,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 14342,
+        "touch_618": 11071,
+        "touch_786": 9229,
+        "continued": 11723,
+        "continued_when_touch_618": 8740,
+        "continued_when_touch_786": 7094
+      },
+      "rates_pct": {
+        "touch_618": 77.19286013108353,
+        "touch_786": 64.34946311532562,
+        "continued": 81.7389485427416,
+        "continued_given_618": 78.94499141902267,
+        "continued_given_786": 76.86639939321704
+      },
+      "ratio_quantiles": {
+        "q10": 0.4247311827957419,
+        "q25": 0.6392694063926853,
+        "q50": 0.985915492957654,
+        "q75": 1.5349344978166304,
+        "q90": 2.3225806451609823
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7176,
+          "touch_786_pct": 63.37792642140468,
+          "continued_pct": 82.41360089186176
+        },
+        "DOWN": {
+          "legs": 7166,
+          "touch_786_pct": 65.3223555679598,
+          "continued_pct": 81.06335473067261
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USDJPY\\USDJPYz_H1.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USDJPY\\USDJPYz_H1.csv",
+        "ok": true,
+        "rows": 31891,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 4715,
+        "touch_618": 3492,
+        "touch_786": 2895,
+        "continued": 3839,
+        "continued_when_touch_618": 2722,
+        "continued_when_touch_786": 2202
+      },
+      "rates_pct": {
+        "touch_618": 74.06150583244963,
+        "touch_786": 61.39978791092259,
+        "continued": 81.42099681866384,
+        "continued_given_618": 77.9495990836197,
+        "continued_given_786": 76.06217616580311
+      },
+      "ratio_quantiles": {
+        "q10": 0.3929058663028659,
+        "q25": 0.5953360768175672,
+        "q50": 0.9644444444444632,
+        "q75": 1.6130753835890381,
+        "q90": 2.6556390977443796
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 2359,
+          "touch_786_pct": 57.43959304790165,
+          "continued_pct": 85.20559559135226
+        },
+        "DOWN": {
+          "legs": 2356,
+          "touch_786_pct": 65.36502546689304,
+          "continued_pct": 77.63157894736842
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USDJPY\\USDJPYz_H12.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USDJPY\\USDJPYz_H12.csv",
+        "ok": true,
+        "rows": 2929,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 412,
+        "touch_618": 319,
+        "touch_786": 267,
+        "continued": 331,
+        "continued_when_touch_618": 246,
+        "continued_when_touch_786": 198
+      },
+      "rates_pct": {
+        "touch_618": 77.42718446601941,
+        "touch_786": 64.80582524271844,
+        "continued": 80.33980582524272,
+        "continued_given_618": 77.11598746081505,
+        "continued_given_786": 74.15730337078652
+      },
+      "ratio_quantiles": {
+        "q10": 0.4418351815612085,
+        "q25": 0.6446454319045739,
+        "q50": 0.9702970297029692,
+        "q75": 1.4800910125142173,
+        "q90": 2.4030790762771117
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 207,
+          "touch_786_pct": 58.93719806763285,
+          "continued_pct": 88.88888888888889
+        },
+        "DOWN": {
+          "legs": 205,
+          "touch_786_pct": 70.73170731707317,
+          "continued_pct": 71.70731707317073
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USDJPY\\USDJPYz_H2.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USDJPY\\USDJPYz_H2.csv",
+        "ok": true,
+        "rows": 16116,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 2377,
+        "touch_618": 1777,
+        "touch_786": 1462,
+        "continued": 1946,
+        "continued_when_touch_618": 1395,
+        "continued_when_touch_786": 1116
+      },
+      "rates_pct": {
+        "touch_618": 74.75809844341607,
+        "touch_786": 61.50610012620951,
+        "continued": 81.8679007151872,
+        "continued_given_618": 78.50309510410804,
+        "continued_given_786": 76.33378932968536
+      },
+      "ratio_quantiles": {
+        "q10": 0.39814814814814814,
+        "q25": 0.6071904127829604,
+        "q50": 0.9522613065326848,
+        "q75": 1.6179577464788586,
+        "q90": 2.6624685138540034
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 1187,
+          "touch_786_pct": 56.192080876158386,
+          "continued_pct": 87.02611625947767
+        },
+        "DOWN": {
+          "legs": 1190,
+          "touch_786_pct": 66.80672268907563,
+          "continued_pct": 76.72268907563026
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USDJPY\\USDJPYz_H4.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USDJPY\\USDJPYz_H4.csv",
+        "ok": true,
+        "rows": 8243,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 1206,
+        "touch_618": 895,
+        "touch_786": 739,
+        "continued": 977,
+        "continued_when_touch_618": 690,
+        "continued_when_touch_786": 559
+      },
+      "rates_pct": {
+        "touch_618": 74.212271973466,
+        "touch_786": 61.27694859038142,
+        "continued": 81.01160862354892,
+        "continued_given_618": 77.09497206703911,
+        "continued_given_786": 75.64276048714478
+      },
+      "ratio_quantiles": {
+        "q10": 0.3824733824733803,
+        "q25": 0.604166666666657,
+        "q50": 0.9639830508474658,
+        "q75": 1.5869883040935675,
+        "q90": 2.6848591549295304
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 605,
+          "touch_786_pct": 55.70247933884298,
+          "continued_pct": 87.10743801652893
+        },
+        "DOWN": {
+          "legs": 601,
+          "touch_786_pct": 66.88851913477538,
+          "continued_pct": 74.87520798668885
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USDJPY\\USDJPYz_M30.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USDJPY\\USDJPYz_M30.csv",
+        "ok": true,
+        "rows": 63778,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 9429,
+        "touch_618": 7044,
+        "touch_786": 5874,
+        "continued": 7633,
+        "continued_when_touch_618": 5468,
+        "continued_when_touch_786": 4439
+      },
+      "rates_pct": {
+        "touch_618": 74.70569519567293,
+        "touch_786": 62.29716831053134,
+        "continued": 80.95238095238095,
+        "continued_given_618": 77.62634866553095,
+        "continued_given_786": 75.57030983997277
+      },
+      "ratio_quantiles": {
+        "q10": 0.3948453608247235,
+        "q25": 0.6062992125984105,
+        "q50": 0.9531249999999972,
+        "q75": 1.6194852941176143,
+        "q90": 2.6341463414632624
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 4718,
+          "touch_786_pct": 58.58414582450191,
+          "continued_pct": 84.18821534548537
+        },
+        "DOWN": {
+          "legs": 4711,
+          "touch_786_pct": 66.01570791763957,
+          "continued_pct": 77.71173848439821
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USDJPY\\USDJPYz_M5.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USDJPY\\USDJPYz_M5.csv",
+        "ok": true,
+        "rows": 99967,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 14353,
+        "touch_618": 11000,
+        "touch_786": 9132,
+        "continued": 11690,
+        "continued_when_touch_618": 8608,
+        "continued_when_touch_786": 6956
+      },
+      "rates_pct": {
+        "touch_618": 76.63903016790916,
+        "touch_786": 63.624329408486034,
+        "continued": 81.44638751480527,
+        "continued_given_618": 78.25454545454545,
+        "continued_given_786": 76.17170389837932
+      },
+      "ratio_quantiles": {
+        "q10": 0.41984732824432613,
+        "q25": 0.6312056737588952,
+        "q50": 0.9777777777777618,
+        "q75": 1.5574324324325162,
+        "q90": 2.3818181818178905
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7180,
+          "touch_786_pct": 61.6016713091922,
+          "continued_pct": 82.25626740947075
+        },
+        "DOWN": {
+          "legs": 7173,
+          "touch_786_pct": 65.64896138296389,
+          "continued_pct": 80.63571727310749
+        }
+      }
+    },
+    {
+      "ok": false,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USOIL\\USOILz_Daily.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USOIL\\USOILz_Daily.csv",
+        "ok": false,
+        "error": "bad_columns:['DATE', 'OPEN', 'HIGH', 'LOW', 'CLOSE', 'TICKVOL', 'VOL', 'SPREAD']"
+      },
+      "reason": "not_enough_rows(0)"
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USOIL\\USOILz_H1.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USOIL\\USOILz_H1.csv",
+        "ok": true,
+        "rows": 30191,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 4488,
+        "touch_618": 3281,
+        "touch_786": 2792,
+        "continued": 3731,
+        "continued_when_touch_618": 2622,
+        "continued_when_touch_786": 2196
+      },
+      "rates_pct": {
+        "touch_618": 73.10606060606061,
+        "touch_786": 62.21033868092692,
+        "continued": 83.13279857397504,
+        "continued_given_618": 79.91466016458396,
+        "continued_given_786": 78.65329512893983
+      },
+      "ratio_quantiles": {
+        "q10": 0.3497206703910629,
+        "q25": 0.5838958534233364,
+        "q50": 0.9929851909586903,
+        "q75": 1.7116430903155588,
+        "q90": 2.784557907845588
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 2246,
+          "touch_786_pct": 60.41852181656278,
+          "continued_pct": 84.8619768477293
+        },
+        "DOWN": {
+          "legs": 2242,
+          "touch_786_pct": 64.00535236396075,
+          "continued_pct": 81.40053523639608
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USOIL\\USOILz_H12.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USOIL\\USOILz_H12.csv",
+        "ok": true,
+        "rows": 2923,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 453,
+        "touch_618": 353,
+        "touch_786": 290,
+        "continued": 365,
+        "continued_when_touch_618": 273,
+        "continued_when_touch_786": 217
+      },
+      "rates_pct": {
+        "touch_618": 77.92494481236203,
+        "touch_786": 64.0176600441501,
+        "continued": 80.57395143487858,
+        "continued_given_618": 77.33711048158641,
+        "continued_given_786": 74.82758620689656
+      },
+      "ratio_quantiles": {
+        "q10": 0.44469067405355467,
+        "q25": 0.64921215026062,
+        "q50": 1.0019097636667487,
+        "q75": 1.5447988459689064,
+        "q90": 2.1888574126534497
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 227,
+          "touch_786_pct": 62.55506607929515,
+          "continued_pct": 82.37885462555066
+        },
+        "DOWN": {
+          "legs": 226,
+          "touch_786_pct": 65.48672566371681,
+          "continued_pct": 78.76106194690266
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USOIL\\USOILz_H4.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USOIL\\USOILz_H4.csv",
+        "ok": true,
+        "rows": 8172,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 1331,
+        "touch_618": 999,
+        "touch_786": 843,
+        "continued": 1097,
+        "continued_when_touch_618": 784,
+        "continued_when_touch_786": 645
+      },
+      "rates_pct": {
+        "touch_618": 75.05634861006762,
+        "touch_786": 63.335837716003006,
+        "continued": 82.41923365890308,
+        "continued_given_618": 78.47847847847848,
+        "continued_given_786": 76.51245551601423
+      },
+      "ratio_quantiles": {
+        "q10": 0.408883826879269,
+        "q25": 0.6108247422680406,
+        "q50": 1.032312925170061,
+        "q75": 1.6320824135393623,
+        "q90": 2.3760806916426436
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 666,
+          "touch_786_pct": 60.510510510510514,
+          "continued_pct": 84.53453453453453
+        },
+        "DOWN": {
+          "legs": 665,
+          "touch_786_pct": 66.16541353383458,
+          "continued_pct": 80.30075187969925
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USOIL\\USOILz_M15.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USOIL\\USOILz_M15.csv",
+        "ok": true,
+        "rows": 99988,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 14801,
+        "touch_618": 11206,
+        "touch_786": 9451,
+        "continued": 12368,
+        "continued_when_touch_618": 9060,
+        "continued_when_touch_786": 7484
+      },
+      "rates_pct": {
+        "touch_618": 75.71110060131072,
+        "touch_786": 63.85379366259036,
+        "continued": 83.5619214917911,
+        "continued_given_618": 80.84954488666786,
+        "continued_given_786": 79.18738757803408
+      },
+      "ratio_quantiles": {
+        "q10": 0.38225806451613364,
+        "q25": 0.6196319018404951,
+        "q50": 0.9790209790209783,
+        "q75": 1.6087851750171556,
+        "q90": 2.5775193798449587
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7403,
+          "touch_786_pct": 62.36660813183845,
+          "continued_pct": 84.31716871538565
+        },
+        "DOWN": {
+          "legs": 7398,
+          "touch_786_pct": 65.34198432008651,
+          "continued_pct": 82.80616382806164
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USOIL\\USOILz_M5.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USOIL\\USOILz_M5.csv",
+        "ok": true,
+        "rows": 99964,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 14933,
+        "touch_618": 11431,
+        "touch_786": 9515,
+        "continued": 12213,
+        "continued_when_touch_618": 9025,
+        "continued_when_touch_786": 7345
+      },
+      "rates_pct": {
+        "touch_618": 76.54858367374271,
+        "touch_786": 63.71794013259225,
+        "continued": 81.78530770776133,
+        "continued_given_618": 78.95197270580002,
+        "continued_given_786": 77.19390436153442
+      },
+      "ratio_quantiles": {
+        "q10": 0.4127310061601552,
+        "q25": 0.6301703163016955,
+        "q50": 0.9748743718592838,
+        "q75": 1.5621301775147964,
+        "q90": 2.4266666666666037
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7462,
+          "touch_786_pct": 62.39614044492093,
+          "continued_pct": 82.24336638970786
+        },
+        "DOWN": {
+          "legs": 7471,
+          "touch_786_pct": 65.0381475036809,
+          "continued_pct": 81.32780082987551
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_H1.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_H1.csv",
+        "ok": true,
+        "rows": 29510,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 4290,
+        "touch_618": 3119,
+        "touch_786": 2685,
+        "continued": 3590,
+        "continued_when_touch_618": 2498,
+        "continued_when_touch_786": 2113
+      },
+      "rates_pct": {
+        "touch_618": 72.7039627039627,
+        "touch_786": 62.58741258741259,
+        "continued": 83.68298368298369,
+        "continued_given_618": 80.08977236293684,
+        "continued_given_786": 78.69646182495345
+      },
+      "ratio_quantiles": {
+        "q10": 0.3086868949386022,
+        "q25": 0.5692321504724714,
+        "q50": 1.0027180243845786,
+        "q75": 1.7633926486385432,
+        "q90": 3.1180752122927395
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 2148,
+          "touch_786_pct": 58.42644320297951,
+          "continued_pct": 86.63873370577281
+        },
+        "DOWN": {
+          "legs": 2142,
+          "touch_786_pct": 66.76003734827265,
+          "continued_pct": 80.71895424836602
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M1.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M1.csv",
+        "ok": true,
+        "rows": 99818,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15325,
+        "touch_618": 11791,
+        "touch_786": 9826,
+        "continued": 12557,
+        "continued_when_touch_618": 9290,
+        "continued_when_touch_786": 7570
+      },
+      "rates_pct": {
+        "touch_618": 76.93964110929853,
+        "touch_786": 64.11745513866232,
+        "continued": 81.93800978792822,
+        "continued_given_618": 78.78890679331694,
+        "continued_given_786": 77.04050478322817
+      },
+      "ratio_quantiles": {
+        "q10": 0.42665890570440174,
+        "q25": 0.635983263598318,
+        "q50": 0.9687606497784842,
+        "q75": 1.5264616237184794,
+        "q90": 2.4096660070756104
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7665,
+          "touch_786_pct": 63.05283757338552,
+          "continued_pct": 83.24853228962817
+        },
+        "DOWN": {
+          "legs": 7660,
+          "touch_786_pct": 65.18276762402088,
+          "continued_pct": 80.6266318537859
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M10.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M10.csv",
+        "ok": true,
+        "rows": 24153,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 3739,
+        "touch_618": 2841,
+        "touch_786": 2386,
+        "continued": 3149,
+        "continued_when_touch_618": 2310,
+        "continued_when_touch_786": 1903
+      },
+      "rates_pct": {
+        "touch_618": 75.98288312382991,
+        "touch_786": 63.813853971650175,
+        "continued": 84.22037978069002,
+        "continued_given_618": 81.30939809926082,
+        "continued_given_786": 79.7569153394803
+      },
+      "ratio_quantiles": {
+        "q10": 0.3992699989860937,
+        "q25": 0.6298402975278743,
+        "q50": 0.9824606324413954,
+        "q75": 1.585738539898069,
+        "q90": 2.520927601809897
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 1871,
+          "touch_786_pct": 58.36451095670764,
+          "continued_pct": 86.9588455371459
+        },
+        "DOWN": {
+          "legs": 1868,
+          "touch_786_pct": 69.27194860813705,
+          "continued_pct": 81.47751605995717
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M15.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M15.csv",
+        "ok": true,
+        "rows": 100749,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15445,
+        "touch_618": 11568,
+        "touch_786": 9719,
+        "continued": 12989,
+        "continued_when_touch_618": 9404,
+        "continued_when_touch_786": 7758
+      },
+      "rates_pct": {
+        "touch_618": 74.89802525089026,
+        "touch_786": 62.92651343476853,
+        "continued": 84.09841372612496,
+        "continued_given_618": 81.29322268326418,
+        "continued_given_786": 79.82302706039717
+      },
+      "ratio_quantiles": {
+        "q10": 0.3837572090384795,
+        "q25": 0.6085213032581852,
+        "q50": 0.9684111268269923,
+        "q75": 1.6174066356788075,
+        "q90": 2.6380854875863955
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7727,
+          "touch_786_pct": 59.3762132781157,
+          "continued_pct": 86.13951080626376
+        },
+        "DOWN": {
+          "legs": 7718,
+          "touch_786_pct": 66.48095361492615,
+          "continued_pct": 82.05493651204975
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M2.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M2.csv",
+        "ok": true,
+        "rows": 99909,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15367,
+        "touch_618": 11811,
+        "touch_786": 9843,
+        "continued": 12583,
+        "continued_when_touch_618": 9322,
+        "continued_when_touch_786": 7608
+      },
+      "rates_pct": {
+        "touch_618": 76.85950413223141,
+        "touch_786": 64.05284050237522,
+        "continued": 81.88325632849613,
+        "continued_given_618": 78.9264245195157,
+        "continued_given_786": 77.29350807680585
+      },
+      "ratio_quantiles": {
+        "q10": 0.42243595058453265,
+        "q25": 0.6344265719657328,
+        "q50": 0.9723451327433655,
+        "q75": 1.530129124820668,
+        "q90": 2.3921694480100295
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7685,
+          "touch_786_pct": 61.58750813272609,
+          "continued_pct": 84.30709173715029
+        },
+        "DOWN": {
+          "legs": 7682,
+          "touch_786_pct": 66.51913564175996,
+          "continued_pct": 79.45847435563655
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M20.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M20.csv",
+        "ok": true,
+        "rows": 12078,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 1827,
+        "touch_618": 1369,
+        "touch_786": 1147,
+        "continued": 1535,
+        "continued_when_touch_618": 1108,
+        "continued_when_touch_786": 920
+      },
+      "rates_pct": {
+        "touch_618": 74.93158182813355,
+        "touch_786": 62.78051450465244,
+        "continued": 84.0175150519978,
+        "continued_given_618": 80.93498904309715,
+        "continued_given_786": 80.20924149956409
+      },
+      "ratio_quantiles": {
+        "q10": 0.3790157515350796,
+        "q25": 0.6088056098401903,
+        "q50": 0.9771537363160436,
+        "q75": 1.6425477808240867,
+        "q90": 2.7903939330102356
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 914,
+          "touch_786_pct": 56.564551422319475,
+          "continued_pct": 87.417943107221
+        },
+        "DOWN": {
+          "legs": 913,
+          "touch_786_pct": 69.00328587075575,
+          "continued_pct": 80.61336254107339
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M3.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M3.csv",
+        "ok": true,
+        "rows": 99939,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15445,
+        "touch_618": 11860,
+        "touch_786": 9821,
+        "continued": 12729,
+        "continued_when_touch_618": 9430,
+        "continued_when_touch_786": 7629
+      },
+      "rates_pct": {
+        "touch_618": 76.78860472644868,
+        "touch_786": 63.58692133376497,
+        "continued": 82.41502104240854,
+        "continued_given_618": 79.51096121416526,
+        "continued_given_786": 77.68048060278994
+      },
+      "ratio_quantiles": {
+        "q10": 0.4180753035943183,
+        "q25": 0.6350958311581756,
+        "q50": 0.9747634069400867,
+        "q75": 1.5379027163613048,
+        "q90": 2.405256723716429
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7723,
+          "touch_786_pct": 60.63705813802926,
+          "continued_pct": 85.22594846562217
+        },
+        "DOWN": {
+          "legs": 7722,
+          "touch_786_pct": 66.53716653716654,
+          "continued_pct": 79.6037296037296
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M30.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M30.csv",
+        "ok": true,
+        "rows": 8053,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 1176,
+        "touch_618": 870,
+        "touch_786": 727,
+        "continued": 987,
+        "continued_when_touch_618": 705,
+        "continued_when_touch_786": 580
+      },
+      "rates_pct": {
+        "touch_618": 73.9795918367347,
+        "touch_786": 61.81972789115646,
+        "continued": 83.92857142857143,
+        "continued_given_618": 81.03448275862068,
+        "continued_given_786": 79.7799174690509
+      },
+      "ratio_quantiles": {
+        "q10": 0.36654341960627956,
+        "q25": 0.5984930899713908,
+        "q50": 1.0308700457918827,
+        "q75": 1.6690252963028567,
+        "q90": 2.866865671641817
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 589,
+          "touch_786_pct": 56.7062818336163,
+          "continued_pct": 87.94567062818336
+        },
+        "DOWN": {
+          "legs": 587,
+          "touch_786_pct": 66.95059625212947,
+          "continued_pct": 79.89778534923339
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M4.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M4.csv",
+        "ok": true,
+        "rows": 60346,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 9210,
+        "touch_618": 7021,
+        "touch_786": 5872,
+        "continued": 7607,
+        "continued_when_touch_618": 5580,
+        "continued_when_touch_786": 4558
+      },
+      "rates_pct": {
+        "touch_618": 76.23235613463626,
+        "touch_786": 63.756786102062975,
+        "continued": 82.59500542888165,
+        "continued_given_618": 79.47585813986612,
+        "continued_given_786": 77.62261580381471
+      },
+      "ratio_quantiles": {
+        "q10": 0.41290080630034837,
+        "q25": 0.626906704505141,
+        "q50": 0.9753320683112314,
+        "q75": 1.546212121212025,
+        "q90": 2.4192240880137685
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 4610,
+          "touch_786_pct": 59.43600867678959,
+          "continued_pct": 85.6182212581345
+        },
+        "DOWN": {
+          "legs": 4600,
+          "touch_786_pct": 68.08695652173913,
+          "continued_pct": 79.56521739130434
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M5.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\USTEC_x100\\USTEC_x100z_M5.csv",
+        "ok": true,
+        "rows": 99964,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15496,
+        "touch_618": 11820,
+        "touch_786": 9890,
+        "continued": 12711,
+        "continued_when_touch_618": 9322,
+        "continued_when_touch_786": 7629
+      },
+      "rates_pct": {
+        "touch_618": 76.27774909654104,
+        "touch_786": 63.82292204439855,
+        "continued": 82.02762003097574,
+        "continued_given_618": 78.8663282571912,
+        "continued_given_786": 77.13852376137513
+      },
+      "ratio_quantiles": {
+        "q10": 0.41653501843075014,
+        "q25": 0.6275314022045775,
+        "q50": 0.9702760084924997,
+        "q75": 1.552116234996945,
+        "q90": 2.4161472246958384
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7752,
+          "touch_786_pct": 60.01031991744066,
+          "continued_pct": 85.10061919504643
+        },
+        "DOWN": {
+          "legs": 7744,
+          "touch_786_pct": 67.63946280991736,
+          "continued_pct": 78.95144628099173
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_H1.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_H1.csv",
+        "ok": true,
+        "rows": 30353,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 4446,
+        "touch_618": 3315,
+        "touch_786": 2779,
+        "continued": 3608,
+        "continued_when_touch_618": 2579,
+        "continued_when_touch_786": 2117
+      },
+      "rates_pct": {
+        "touch_618": 74.56140350877193,
+        "touch_786": 62.505623031938825,
+        "continued": 81.15159694107062,
+        "continued_given_618": 77.79788838612367,
+        "continued_given_786": 76.17848146815402
+      },
+      "ratio_quantiles": {
+        "q10": 0.3720208046504582,
+        "q25": 0.6036665450565392,
+        "q50": 0.96594625926386,
+        "q75": 1.6546737213403953,
+        "q90": 2.636762225969612
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 2226,
+          "touch_786_pct": 59.928122192273136,
+          "continued_pct": 84.59119496855345
+        },
+        "DOWN": {
+          "legs": 2220,
+          "touch_786_pct": 65.09009009009009,
+          "continued_pct": 77.70270270270271
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M1.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M1.csv",
+        "ok": true,
+        "rows": 100221,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15720,
+        "touch_618": 12150,
+        "touch_786": 10027,
+        "continued": 12893,
+        "continued_when_touch_618": 9641,
+        "continued_when_touch_786": 7790
+      },
+      "rates_pct": {
+        "touch_618": 77.29007633587786,
+        "touch_786": 63.78498727735369,
+        "continued": 82.01653944020356,
+        "continued_given_618": 79.34979423868313,
+        "continued_given_786": 77.69023636182308
+      },
+      "ratio_quantiles": {
+        "q10": 0.4392934532799521,
+        "q25": 0.638875905585388,
+        "q50": 0.964282938808488,
+        "q75": 1.5083379655363696,
+        "q90": 2.346001974333096
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7865,
+          "touch_786_pct": 60.44500953591863,
+          "continued_pct": 84.39923712650986
+        },
+        "DOWN": {
+          "legs": 7855,
+          "touch_786_pct": 67.12921705919797,
+          "continued_pct": 79.63080840229154
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M10.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M10.csv",
+        "ok": true,
+        "rows": 99982,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15460,
+        "touch_618": 11879,
+        "touch_786": 9831,
+        "continued": 12710,
+        "continued_when_touch_618": 9446,
+        "continued_when_touch_786": 7653
+      },
+      "rates_pct": {
+        "touch_618": 76.83699870633895,
+        "touch_786": 63.589909443725745,
+        "continued": 82.21216041397155,
+        "continued_given_618": 79.51847798636248,
+        "continued_given_786": 77.84559047909673
+      },
+      "ratio_quantiles": {
+        "q10": 0.4228059780104081,
+        "q25": 0.6344988344988401,
+        "q50": 0.9686005851709086,
+        "q75": 1.5402906208717575,
+        "q90": 2.4587670136109545
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7733,
+          "touch_786_pct": 60.75261864735549,
+          "continued_pct": 85.06401137980086
+        },
+        "DOWN": {
+          "legs": 7727,
+          "touch_786_pct": 66.4294033907079,
+          "continued_pct": 79.35809499158793
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M15.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M15.csv",
+        "ok": true,
+        "rows": 99988,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15540,
+        "touch_618": 11798,
+        "touch_786": 9799,
+        "continued": 12818,
+        "continued_when_touch_618": 9424,
+        "continued_when_touch_786": 7647
+      },
+      "rates_pct": {
+        "touch_618": 75.92020592020592,
+        "touch_786": 63.05662805662806,
+        "continued": 82.48391248391249,
+        "continued_given_618": 79.87794541447703,
+        "continued_given_786": 78.03857536483315
+      },
+      "ratio_quantiles": {
+        "q10": 0.4118253695428152,
+        "q25": 0.6219129998746235,
+        "q50": 0.9664824887665967,
+        "q75": 1.5707843137255117,
+        "q90": 2.524793388429792
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7775,
+          "touch_786_pct": 60.97749196141479,
+          "continued_pct": 84.7717041800643
+        },
+        "DOWN": {
+          "legs": 7765,
+          "touch_786_pct": 65.1384417256922,
+          "continued_pct": 80.19317450096587
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M2.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M2.csv",
+        "ok": true,
+        "rows": 99910,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15733,
+        "touch_618": 12177,
+        "touch_786": 10015,
+        "continued": 12829,
+        "continued_when_touch_618": 9609,
+        "continued_when_touch_786": 7713
+      },
+      "rates_pct": {
+        "touch_618": 77.3978262251319,
+        "touch_786": 63.65600966122164,
+        "continued": 81.54198182164876,
+        "continued_given_618": 78.91106183789111,
+        "continued_given_786": 77.01447828257614
+      },
+      "ratio_quantiles": {
+        "q10": 0.441160259060196,
+        "q25": 0.6397974075027939,
+        "q50": 0.9625790583275232,
+        "q75": 1.5146528403965591,
+        "q90": 2.340217391305094
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7873,
+          "touch_786_pct": 59.88822558109996,
+          "continued_pct": 84.46589610059698
+        },
+        "DOWN": {
+          "legs": 7860,
+          "touch_786_pct": 67.43002544529261,
+          "continued_pct": 78.61323155216284
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M3.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M3.csv",
+        "ok": true,
+        "rows": 99939,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15706,
+        "touch_618": 12122,
+        "touch_786": 9975,
+        "continued": 12863,
+        "continued_when_touch_618": 9589,
+        "continued_when_touch_786": 7691
+      },
+      "rates_pct": {
+        "touch_618": 77.18069527569082,
+        "touch_786": 63.510760219024576,
+        "continued": 81.89863746338979,
+        "continued_given_618": 79.10410823296486,
+        "continued_given_786": 77.10275689223057
+      },
+      "ratio_quantiles": {
+        "q10": 0.4340976942133211,
+        "q25": 0.6366476750597173,
+        "q50": 0.963029218843144,
+        "q75": 1.525488530161452,
+        "q90": 2.362211709047867
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7857,
+          "touch_786_pct": 60.07381952399135,
+          "continued_pct": 84.48517245768105
+        },
+        "DOWN": {
+          "legs": 7849,
+          "touch_786_pct": 66.95120397502866,
+          "continued_pct": 79.30946617403491
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M30.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M30.csv",
+        "ok": true,
+        "rows": 60669,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 9255,
+        "touch_618": 6960,
+        "touch_786": 5805,
+        "continued": 7612,
+        "continued_when_touch_618": 5516,
+        "continued_when_touch_786": 4516
+      },
+      "rates_pct": {
+        "touch_618": 75.20259319286872,
+        "touch_786": 62.72285251215559,
+        "continued": 82.247433819557,
+        "continued_given_618": 79.25287356321839,
+        "continued_given_786": 77.79500430663221
+      },
+      "ratio_quantiles": {
+        "q10": 0.387637392534555,
+        "q25": 0.6119455526871578,
+        "q50": 0.9712297316688144,
+        "q75": 1.6212290502793507,
+        "q90": 2.619101009071448
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 4630,
+          "touch_786_pct": 60.36717062634989,
+          "continued_pct": 85.01079913606911
+        },
+        "DOWN": {
+          "legs": 4625,
+          "touch_786_pct": 65.08108108108108,
+          "continued_pct": 79.48108108108109
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M4.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M4.csv",
+        "ok": true,
+        "rows": 99955,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15658,
+        "touch_618": 12075,
+        "touch_786": 10002,
+        "continued": 12849,
+        "continued_when_touch_618": 9563,
+        "continued_when_touch_786": 7749
+      },
+      "rates_pct": {
+        "touch_618": 77.11712862434538,
+        "touch_786": 63.87788989653851,
+        "continued": 82.06028867032826,
+        "continued_given_618": 79.19668737060042,
+        "continued_given_786": 77.4745050989802
+      },
+      "ratio_quantiles": {
+        "q10": 0.42691583369551034,
+        "q25": 0.6377681115944459,
+        "q50": 0.9730957790266754,
+        "q75": 1.5300515705579247,
+        "q90": 2.3978769663640294
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7835,
+          "touch_786_pct": 59.872367581365666,
+          "continued_pct": 85.46266751754946
+        },
+        "DOWN": {
+          "legs": 7823,
+          "touch_786_pct": 67.88955643614982,
+          "continued_pct": 78.65269078358686
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M5.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M5.csv",
+        "ok": true,
+        "rows": 99982,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15657,
+        "touch_618": 12044,
+        "touch_786": 10005,
+        "continued": 12837,
+        "continued_when_touch_618": 9531,
+        "continued_when_touch_786": 7750
+      },
+      "rates_pct": {
+        "touch_618": 76.92405952609057,
+        "touch_786": 63.901130484767194,
+        "continued": 81.98888675991569,
+        "continued_given_618": 79.13483892394554,
+        "continued_given_786": 77.46126936531734
+      },
+      "ratio_quantiles": {
+        "q10": 0.4308152173913025,
+        "q25": 0.6366476750597173,
+        "q50": 0.9709784411276894,
+        "q75": 1.5223684210527013,
+        "q90": 2.388096208723922
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7830,
+          "touch_786_pct": 60.12771392081737,
+          "continued_pct": 85.49169859514687
+        },
+        "DOWN": {
+          "legs": 7827,
+          "touch_786_pct": 67.67599335633065,
+          "continued_pct": 78.48473233678293
+        }
+      }
+    },
+    {
+      "ok": true,
+      "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M6.csv",
+      "meta": {
+        "path": "C:\\Users\\gdgar\\MisProyectosVSCode\\TEAM_ATLAS\\data\\csv\\XAUUSD\\XAUUSDz_M6.csv",
+        "ok": true,
+        "rows": 99970,
+        "sep": "\t"
+      },
+      "params": {
+        "pivot_left": 3,
+        "pivot_right": 3,
+        "tol": 0.008,
+        "lookahead": 120,
+        "min_rows": 400
+      },
+      "counts": {
+        "legs": 15551,
+        "touch_618": 11933,
+        "touch_786": 9956,
+        "continued": 12760,
+        "continued_when_touch_618": 9452,
+        "continued_when_touch_786": 7722
+      },
+      "rates_pct": {
+        "touch_618": 76.7346151372902,
+        "touch_786": 64.02160632756735,
+        "continued": 82.0526011188991,
+        "continued_given_618": 79.20891645018017,
+        "continued_given_786": 77.5612695861792
+      },
+      "ratio_quantiles": {
+        "q10": 0.42892023874120105,
+        "q25": 0.6347736625514354,
+        "q50": 0.973276474768997,
+        "q75": 1.5159586423915288,
+        "q90": 2.397433761039698
+      },
+      "by_direction": {
+        "UP": {
+          "legs": 7782,
+          "touch_786_pct": 59.907478797224364,
+          "continued_pct": 85.78771524029813
+        },
+        "DOWN": {
+          "legs": 7769,
+          "touch_786_pct": 68.14261809756725,
+          "continued_pct": 78.31123696743468
+        }
+      }
+    }
+  ]
+}

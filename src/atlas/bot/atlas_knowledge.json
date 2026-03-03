@@ -1,0 +1,25 @@
+{
+  "EURUSDz": {
+    "title": "EURUSDz — Playbook",
+    "bullets": [
+      "Contexto: cuando 4H está limpio, respetar zonas repetibles.",
+      "Timing: si llega a zona y no reacciona rápido -> NO_TRADE.",
+      "Gestión: TP1 temprano, BE rápido si es scalping."
+    ]
+  },
+  "USDJPYz": {
+    "title": "USDJPYz — Playbook",
+    "bullets": [
+      "Respetar zonas de marco mayor, no perseguir.",
+      "Si hay llegada agresiva -> esperar barrida + recuperación."
+    ]
+  },
+  "XAUUSDz": {
+    "title": "XAUUSDz — GAP/Continuidad",
+    "bullets": [
+      "El gap es objetivo, no gatillo.",
+      "Si hay continuidad limpia, gap se descarta como target.",
+      "Si falla continuidad: exageración -> fallo -> ruptura -> recuperación."
+    ]
+  }
+}

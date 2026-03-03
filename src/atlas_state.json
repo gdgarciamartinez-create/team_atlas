@@ -1,0 +1,11 @@
+{
+  "setups": [],
+  "last_alert_ts": {},
+  "alerts": [],
+  "engine": {
+    "running": true,
+    "last_run": 1770232028.7780142,
+    "evaluated": 0
+  },
+  "journal": []
+}

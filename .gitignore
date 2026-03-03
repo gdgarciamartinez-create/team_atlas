@@ -1,0 +1,9 @@
+venv/
+.venv/
+.gemini/
+.cache/
+.matplotlib/
+src/.venv/
+__pycache__/
+data/
+node_modules/

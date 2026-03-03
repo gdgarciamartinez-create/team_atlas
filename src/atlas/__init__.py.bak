@@ -1,0 +1,10 @@
+﻿"""
+TEAM ATLAS
+Package marker only.
+
+MANDAMIENTO:
+- No imports
+- No routers
+- No side-effects
+"""
+__all__ = []

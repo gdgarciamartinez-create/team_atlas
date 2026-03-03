@@ -1,0 +1,110 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body, html, #root {
+  height: 100%;
+  background: #0f1117;
+  color: white;
+}
+
+.atlas-app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.atlas-topbar {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: #151922;
+  border-bottom: 1px solid #222;
+}
+
+.atlas-brand-title {
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.atlas-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.atlas-left {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #222;
+}
+
+.atlas-chart-container {
+  flex: 1;
+  background: #0f1117;
+}
+
+.atlas-right {
+  flex: 1;
+  padding: 15px;
+  background: #131722;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.atlas-card {
+  background: #1a1f2e;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.estado-grande {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.estado-ESPERANDO { color: #aaa; }
+.estado-ZONA { color: #f1c40f; }
+.estado-GATILLO { color: #00ffcc; }
+.estado-NO_TRADE { color: #ff4d4d; }
+
+.led {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 8px;
+  background: #222;
+  box-shadow: 0 0 5px #000;
+}
+
+.led.on {
+  background: #00ff88;
+  box-shadow: 0 0 10px #00ff88;
+}
+
+.led.off {
+  background: #222;
+}
+
+.boton-reseña {
+  padding: 8px 12px;
+  background: #222;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.boton-reseña:hover {
+  background: #333;
+}

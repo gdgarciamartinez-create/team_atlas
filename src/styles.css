@@ -1,0 +1,27 @@
+body {
+  margin: 0;
+  font-family: Inter, sans-serif;
+  background: #0b1220;
+  color: #cbd5e1;
+}
+
+button {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: #334155;
+}
+
+.panel {
+  padding: 20px;
+  background: #111827;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
