@@ -1,123 +1,789 @@
-// src/atlas/frontend/src/Charts.jsx
-import React, { useEffect, useRef } from "react";
-import { createChart } from "lightweight-charts";
+import React, { useEffect, useMemo, useRef } from "react";
+import { createChart, LineStyle, CrosshairMode } from "lightweight-charts";
 
-/**
- * Normaliza candles para Lightweight Charts:
- * - garantiza time en SEGUNDOS (int)
- * - deduplica por time (si hay repetidos, se queda con el último)
- * - ordena ascendente por time
- * - elimina items inválidos
- */
-function normalizeCandles(raw) {
-  if (!Array.isArray(raw)) return [];
+function toUnixSec(t) {
+  if (t == null) return null;
 
-  const byTime = new Map();
-
-  for (const c of raw) {
-    if (!c) continue;
-
-    // soporta formatos: {time, open, high, low, close} o {t, o, h, l, c}
-    const t0 = c.time ?? c.t ?? c.timestamp ?? c.ts ?? null;
-    const o = c.open ?? c.o;
-    const h = c.high ?? c.h;
-    const l = c.low ?? c.l;
-    const cl = c.close ?? c.c;
-
-    if (t0 == null) continue;
-
-    let t = Number(t0);
-    if (!Number.isFinite(t)) continue;
-
-    // Si viene en ms (13 dígitos típico), lo pasamos a segundos
-    if (t > 2_000_000_000_000) t = Math.floor(t / 1000);
-
-    t = Math.floor(t);
-
-    const oo = Number(o);
-    const hh = Number(h);
-    const ll = Number(l);
-    const cc = Number(cl);
-
-    if (![oo, hh, ll, cc].every((x) => Number.isFinite(x))) continue;
-
-    // dedupe: si se repite el time, la última gana
-    byTime.set(t, { time: t, open: oo, high: hh, low: ll, close: cc });
+  if (typeof t === "number") {
+    if (t > 10_000_000_000) return Math.floor(t / 1000);
+    return Math.floor(t);
   }
 
-  const out = Array.from(byTime.values()).sort((a, b) => a.time - b.time);
+  const s = String(t);
+  const n = Number(s);
 
-  // safety extra: garantiza strictly increasing (por si algo raro coló)
-  const cleaned = [];
-  let lastT = null;
-  for (const x of out) {
-    if (lastT == null || x.time > lastT) {
-      cleaned.push(x);
-      lastT = x.time;
-    }
+  if (Number.isFinite(n)) {
+    if (n > 10_000_000_000) return Math.floor(n / 1000);
+    return Math.floor(n);
   }
 
-  return cleaned;
+  const d = new Date(s);
+  if (!Number.isFinite(d.getTime())) return null;
+  return Math.floor(d.getTime() / 1000);
 }
 
-export default function Charts({ candles = [] }) {
-  const ref = useRef(null);
+function normalizeCandle(c) {
+  const time = toUnixSec(c?.t ?? c?.time);
+  const open = Number(c?.o ?? c?.open);
+  const high = Number(c?.h ?? c?.high);
+  const low = Number(c?.l ?? c?.low);
+  const close = Number(c?.c ?? c?.close);
+
+  if (
+    time == null ||
+    !Number.isFinite(open) ||
+    !Number.isFinite(high) ||
+    !Number.isFinite(low) ||
+    !Number.isFinite(close)
+  ) {
+    return null;
+  }
+
+  return { time, open, high, low, close };
+}
+
+function normalizeCandles(arr) {
+  const candles = Array.isArray(arr) ? arr : [];
+  const normalized = candles.map(normalizeCandle).filter(Boolean);
+
+  normalized.sort((a, b) => a.time - b.time);
+
+  const deduped = [];
+  let prevTime = null;
+
+  for (const c of normalized) {
+    if (prevTime === c.time && deduped.length) {
+      deduped[deduped.length - 1] = c;
+    } else {
+      deduped.push(c);
+      prevTime = c.time;
+    }
+  }
+
+  return deduped;
+}
+
+function normalizeStateKey(state) {
+  const s = String(state || "").toUpperCase().trim();
+
+  if (s === "WAIT" || s === "NO_DATA" || s === "UNKNOWN_MODE" || s === "UNKNOWN_WORLD") {
+    return "SIN_SETUP";
+  }
+
+  if (s === "WAIT_GATILLO" || s === "SIGNAL" || s === "SETUP") {
+    return "SET_UP";
+  }
+
+  if (s === "SIN_SETUP") return "SIN_SETUP";
+  if (s === "SET_UP") return "SET_UP";
+  if (s === "ENTRY") return "ENTRY";
+  if (s === "IN_TRADE") return "IN_TRADE";
+  if (s === "TP1") return "TP1";
+  if (s === "TP2") return "TP2";
+  if (s === "RUN") return "RUN";
+  if (s === "CLOSED") return "CLOSED";
+
+  return "SIN_SETUP";
+}
+
+function decimalsBySymbol(sym) {
+  if (!sym) return 5;
+  if (sym.startsWith("XAU")) return 2;
+  if (sym.startsWith("BTC")) return 2;
+  if (sym.startsWith("USTEC")) return 2;
+  if (sym.startsWith("USOIL")) return 2;
+  if (sym.includes("JPY")) return 3;
+  return 5;
+}
+
+function minMoveByDigits(digits) {
+  if (digits <= 0) return 1;
+  return Number((1 / 10 ** digits).toFixed(digits));
+}
+
+function getRange(data) {
+  if (!Array.isArray(data) || data.length < 2) return null;
+
+  const lows = data.map((c) => c.low).filter(Number.isFinite);
+  const highs = data.map((c) => c.high).filter(Number.isFinite);
+
+  if (!lows.length || !highs.length) return null;
+
+  const minLow = Math.min(...lows);
+  const maxHigh = Math.max(...highs);
+  const span = maxHigh - minLow;
+
+  if (!Number.isFinite(span) || span <= 0) return null;
+
+  return { minLow, maxHigh, span };
+}
+
+function isRenderableLevel(price, data) {
+  const p = Number(price);
+  if (!Number.isFinite(p) || p <= 0) return false;
+
+  const range = getRange(data);
+  if (!range) return true;
+
+  const { minLow, maxHigh, span } = range;
+
+  const lowerBound = minLow - span * 3.0;
+  const upperBound = maxHigh + span * 3.0;
+
+  return p >= lowerBound && p <= upperBound;
+}
+
+function resolveStartTime(activeRow, data) {
+  const explicit =
+    toUnixSec(activeRow?.entry_candle_time) ??
+    toUnixSec(activeRow?.entry_time) ??
+    toUnixSec(activeRow?.entry_ts) ??
+    null;
+
+  if (explicit != null) return explicit;
+
+  if (!Array.isArray(data) || !data.length) return null;
+
+  const last = data[data.length - 1];
+  return last?.time ?? null;
+}
+
+function getActualStartTime(data, startTime) {
+  if (!Array.isArray(data) || !data.length || startTime == null) return null;
+
+  const exactBar = data.find((c) => c.time === startTime);
+  if (exactBar?.time != null) return exactBar.time;
+
+  const nextBar = data.find((c) => c.time >= startTime);
+  if (nextBar?.time != null) return nextBar.time;
+
+  return data[data.length - 1]?.time ?? data[0]?.time ?? null;
+}
+
+function buildHorizontalSeries(data, price, startTime) {
+  const p = Number(price);
+
+  if (!Array.isArray(data) || data.length < 2) return [];
+  if (!Number.isFinite(p) || p <= 0) return [];
+  if (startTime == null) return [];
+
+  const endTime = data[data.length - 1]?.time;
+  const firstVisibleTime = getActualStartTime(data, startTime);
+
+  if (endTime == null || firstVisibleTime == null) return [];
+
+  return [
+    { time: firstVisibleTime, value: p },
+    { time: endTime, value: p },
+  ];
+}
+
+function buildBaselineZoneSeries(data, level, startTime) {
+  const lvl = Number(level);
+
+  if (!Array.isArray(data) || data.length < 2) return [];
+  if (!Number.isFinite(lvl) || lvl <= 0) return [];
+  if (startTime == null) return [];
+
+  const endTime = data[data.length - 1]?.time;
+  const firstVisibleTime = getActualStartTime(data, startTime);
+
+  if (endTime == null || firstVisibleTime == null) return [];
+
+  return [
+    { time: firstVisibleTime, value: lvl },
+    { time: endTime, value: lvl },
+  ];
+}
+
+function buildVisibleTradeLines(activeRow, data) {
+  const state = normalizeStateKey(activeRow?.state);
+  const showTradeLines = ["ENTRY", "IN_TRADE", "TP1", "TP2", "RUN"].includes(state);
+
+  if (!showTradeLines || !Array.isArray(data) || data.length < 2) {
+    return {
+      entry: null,
+      sl: null,
+      tp: null,
+      entryData: [],
+      slData: [],
+      tpData: [],
+      profitAboveData: [],
+      profitBelowData: [],
+      lossAboveData: [],
+      lossBelowData: [],
+      hasValidTrade: false,
+    };
+  }
+
+  const startTime = resolveStartTime(activeRow, data);
+  const actualStartTime = getActualStartTime(data, startTime);
+
+  const entry = Number(activeRow?.entry);
+  const sl = Number(activeRow?.sl);
+
+  const tp1 = Number(activeRow?.tp1);
+  const tp2 = Number(activeRow?.tp2);
+  const tp = Number.isFinite(tp2)
+    ? tp2
+    : Number.isFinite(Number(activeRow?.tp))
+      ? Number(activeRow?.tp)
+      : tp1;
+
+  const entryOk = isRenderableLevel(entry, data);
+  const slOk = isRenderableLevel(sl, data);
+  const tpOk = isRenderableLevel(tp, data);
+
+  if (!entryOk || !slOk || !tpOk || actualStartTime == null) {
+    return {
+      entry: null,
+      sl: null,
+      tp: null,
+      entryData: [],
+      slData: [],
+      tpData: [],
+      profitAboveData: [],
+      profitBelowData: [],
+      lossAboveData: [],
+      lossBelowData: [],
+      hasValidTrade: false,
+    };
+  }
+
+  const entryData = buildHorizontalSeries(data, entry, actualStartTime);
+  const slData = buildHorizontalSeries(data, sl, actualStartTime);
+  const tpData = buildHorizontalSeries(data, tp, actualStartTime);
+
+  const profitAboveData = [];
+  const profitBelowData = [];
+  const lossAboveData = [];
+  const lossBelowData = [];
+
+  if (tp > entry) {
+    profitAboveData.push(...buildBaselineZoneSeries(data, tp, actualStartTime));
+  } else if (tp < entry) {
+    profitBelowData.push(...buildBaselineZoneSeries(data, tp, actualStartTime));
+  }
+
+  if (sl > entry) {
+    lossAboveData.push(...buildBaselineZoneSeries(data, sl, actualStartTime));
+  } else if (sl < entry) {
+    lossBelowData.push(...buildBaselineZoneSeries(data, sl, actualStartTime));
+  }
+
+  return {
+    entry,
+    sl,
+    tp,
+    entryData,
+    slData,
+    tpData,
+    profitAboveData,
+    profitBelowData,
+    lossAboveData,
+    lossBelowData,
+    hasValidTrade: true,
+  };
+}
+
+function stableTradeSignature(trade) {
+  try {
+    return JSON.stringify({
+      valid: trade.hasValidTrade,
+      entry: trade.entryData,
+      sl: trade.slData,
+      tp: trade.tpData,
+      pa: trade.profitAboveData,
+      pb: trade.profitBelowData,
+      la: trade.lossAboveData,
+      lb: trade.lossBelowData,
+      entryBase: trade.entry,
+    });
+  } catch {
+    return "";
+  }
+}
+
+function clearTradeSeries({
+  entrySeriesRef,
+  slSeriesRef,
+  tpSeriesRef,
+  profitAboveRef,
+  profitBelowRef,
+  lossAboveRef,
+  lossBelowRef,
+}) {
+  try {
+    entrySeriesRef.current?.setData([]);
+    slSeriesRef.current?.setData([]);
+    tpSeriesRef.current?.setData([]);
+    profitAboveRef.current?.setData([]);
+    profitBelowRef.current?.setData([]);
+    lossAboveRef.current?.setData([]);
+    lossBelowRef.current?.setData([]);
+  } catch {}
+}
+
+export default function Charts({ snapshot, activeRow, accent = "#ff2fb3" }) {
+  const containerRef = useRef(null);
+
   const chartRef = useRef(null);
-  const seriesRef = useRef(null);
+  const resizeObserverRef = useRef(null);
+
+  const candleSeriesRef = useRef(null);
+  const entrySeriesRef = useRef(null);
+  const slSeriesRef = useRef(null);
+  const tpSeriesRef = useRef(null);
+  const profitAboveRef = useRef(null);
+  const profitBelowRef = useRef(null);
+  const lossAboveRef = useRef(null);
+  const lossBelowRef = useRef(null);
+
+  const hasFittedRef = useRef(false);
+  const lastCandlesSignatureRef = useRef("");
+  const lastTradeSignatureRef = useRef("");
+  const lastGoodCandlesRef = useRef([]);
+
+  const symbolKey = activeRow?.symbol || snapshot?.symbol || "UNKNOWN";
+  const tfKey = activeRow?.tf || snapshot?.tf || "UNKNOWN";
+  const chartKey = `${symbolKey}__${tfKey}`;
+  const digits = decimalsBySymbol(symbolKey);
+  const minMove = minMoveByDigits(digits);
+
+  const incomingData = useMemo(() => {
+    const source = snapshot?.candles || [];
+    return normalizeCandles(source).slice(-220);
+  }, [snapshot?.candles, snapshot?.symbol, snapshot?.tf]);
+
+  const data = useMemo(() => {
+    if (incomingData.length >= 2) {
+      return incomingData;
+    }
+    return lastGoodCandlesRef.current || [];
+  }, [incomingData]);
+
+  const candlesSignature = useMemo(() => {
+    if (!data.length) return "[]";
+    const first = data[0];
+    const last = data[data.length - 1];
+    return `${data.length}|${first.time}|${first.open}|${first.high}|${first.low}|${first.close}|${last.time}|${last.open}|${last.high}|${last.low}|${last.close}`;
+  }, [data]);
+
+  const tradeLines = useMemo(() => {
+    return buildVisibleTradeLines(activeRow, data);
+  }, [
+    activeRow?.state,
+    activeRow?.side,
+    activeRow?.entry,
+    activeRow?.sl,
+    activeRow?.tp,
+    activeRow?.tp1,
+    activeRow?.tp2,
+    activeRow?.entry_candle_time,
+    activeRow?.entry_time,
+    activeRow?.entry_ts,
+    data,
+  ]);
+
+  const tradeSignature = useMemo(() => stableTradeSignature(tradeLines), [tradeLines]);
 
   useEffect(() => {
-    if (!ref.current) return;
+    const el = containerRef.current;
+    if (!el) return;
 
-    // crear chart
-    const chart = createChart(ref.current, {
-      width: ref.current.clientWidth,
-      height: 520,
-      layout: { background: { color: "transparent" }, textColor: "#e9eef5" },
-      grid: {
-        vertLines: { color: "rgba(255,255,255,0.06)" },
-        horzLines: { color: "rgba(255,255,255,0.06)" },
-      },
-      rightPriceScale: { borderColor: "rgba(255,255,255,0.12)" },
-      timeScale: { borderColor: "rgba(255,255,255,0.12)" },
-      crosshair: { mode: 1 },
-    });
+    hasFittedRef.current = false;
+    lastCandlesSignatureRef.current = "";
+    lastTradeSignatureRef.current = "";
 
-    const series = chart.addCandlestickSeries({
-      // (no tocamos colores acá, los tuyos ya están definidos en tu proyecto)
-    });
+    try {
+      resizeObserverRef.current?.disconnect();
+    } catch {}
 
-    chartRef.current = chart;
-    seriesRef.current = series;
+    try {
+      chartRef.current?.remove();
+    } catch {}
 
-    const onResize = () => {
-      if (!ref.current || !chartRef.current) return;
-      chartRef.current.applyOptions({ width: ref.current.clientWidth });
-    };
-    window.addEventListener("resize", onResize);
+    chartRef.current = null;
+    candleSeriesRef.current = null;
+    entrySeriesRef.current = null;
+    slSeriesRef.current = null;
+    tpSeriesRef.current = null;
+    profitAboveRef.current = null;
+    profitBelowRef.current = null;
+    lossAboveRef.current = null;
+    lossBelowRef.current = null;
+
+    try {
+      const chart = createChart(el, {
+        width: el.clientWidth || 1200,
+        height: 520,
+        layout: {
+          background: { color: "#0b0f14" },
+          textColor: "#d8e6ff",
+          fontSize: 12,
+        },
+        localization: {
+          priceFormatter: (price) => Number(price).toFixed(digits),
+        },
+        grid: {
+          vertLines: { color: "rgba(255,255,255,0.035)" },
+          horzLines: { color: "rgba(255,255,255,0.035)" },
+        },
+        crosshair: {
+          mode: CrosshairMode.Normal,
+          vertLine: {
+            visible: false,
+            labelVisible: false,
+          },
+          horzLine: {
+            visible: true,
+            labelVisible: true,
+          },
+        },
+        rightPriceScale: {
+          visible: true,
+          autoScale: true,
+          borderColor: "rgba(255,255,255,0.10)",
+          scaleMargins: {
+            top: 0.08,
+            bottom: 0.08,
+          },
+          entireTextOnly: false,
+        },
+        leftPriceScale: {
+          visible: false,
+        },
+        timeScale: {
+          borderColor: "rgba(255,255,255,0.10)",
+          timeVisible: true,
+          secondsVisible: false,
+          rightOffset: 10,
+          barSpacing: 8,
+          minBarSpacing: 5,
+          fixLeftEdge: false,
+          fixRightEdge: false,
+          lockVisibleTimeRangeOnResize: false,
+        },
+        handleScroll: {
+          mouseWheel: true,
+          pressedMouseMove: true,
+          horzTouchDrag: true,
+          vertTouchDrag: false,
+        },
+        handleScale: {
+          axisPressedMouseMove: true,
+          mouseWheel: true,
+          pinch: true,
+        },
+      });
+
+      const commonPriceFormat = {
+        type: "price",
+        precision: digits,
+        minMove,
+      };
+
+      const candleSeries = chart.addCandlestickSeries({
+        upColor: "#f2ede4",
+        downColor: "#8f877a",
+        borderUpColor: "#f2ede4",
+        borderDownColor: "#8f877a",
+        wickUpColor: "#f2ede4",
+        wickDownColor: "#8f877a",
+        priceLineVisible: false,
+        lastValueVisible: true,
+        priceFormat: commonPriceFormat,
+      });
+
+      const profitAbove = chart.addBaselineSeries({
+        baseValue: { type: "price", price: 1 },
+        topFillColor1: "rgba(99, 199, 135, 0.22)",
+        topFillColor2: "rgba(99, 199, 135, 0.08)",
+        topLineColor: "rgba(99, 199, 135, 0)",
+        bottomFillColor1: "rgba(99, 199, 135, 0)",
+        bottomFillColor2: "rgba(99, 199, 135, 0)",
+        bottomLineColor: "rgba(99, 199, 135, 0)",
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+        lastPriceAnimation: 0,
+        priceFormat: commonPriceFormat,
+      });
+
+      const profitBelow = chart.addBaselineSeries({
+        baseValue: { type: "price", price: 1 },
+        topFillColor1: "rgba(99, 199, 135, 0)",
+        topFillColor2: "rgba(99, 199, 135, 0)",
+        topLineColor: "rgba(99, 199, 135, 0)",
+        bottomFillColor1: "rgba(99, 199, 135, 0.22)",
+        bottomFillColor2: "rgba(99, 199, 135, 0.08)",
+        bottomLineColor: "rgba(99, 199, 135, 0)",
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+        lastPriceAnimation: 0,
+        priceFormat: commonPriceFormat,
+      });
+
+      const lossAbove = chart.addBaselineSeries({
+        baseValue: { type: "price", price: 1 },
+        topFillColor1: "rgba(255, 107, 107, 0.20)",
+        topFillColor2: "rgba(255, 107, 107, 0.07)",
+        topLineColor: "rgba(255, 107, 107, 0)",
+        bottomFillColor1: "rgba(255, 107, 107, 0)",
+        bottomFillColor2: "rgba(255, 107, 107, 0)",
+        bottomLineColor: "rgba(255, 107, 107, 0)",
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+        lastPriceAnimation: 0,
+        priceFormat: commonPriceFormat,
+      });
+
+      const lossBelow = chart.addBaselineSeries({
+        baseValue: { type: "price", price: 1 },
+        topFillColor1: "rgba(255, 107, 107, 0)",
+        topFillColor2: "rgba(255, 107, 107, 0)",
+        topLineColor: "rgba(255, 107, 107, 0)",
+        bottomFillColor1: "rgba(255, 107, 107, 0.20)",
+        bottomFillColor2: "rgba(255, 107, 107, 0.07)",
+        bottomLineColor: "rgba(255, 107, 107, 0)",
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+        lastPriceAnimation: 0,
+        priceFormat: commonPriceFormat,
+      });
+
+      const entrySeries = chart.addLineSeries({
+        color: accent,
+        lineWidth: 2,
+        lineStyle: LineStyle.Solid,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+        lastPriceAnimation: 0,
+        priceFormat: commonPriceFormat,
+      });
+
+      const slSeries = chart.addLineSeries({
+        color: "#ff6b6b",
+        lineWidth: 1,
+        lineStyle: LineStyle.Solid,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+        lastPriceAnimation: 0,
+        priceFormat: commonPriceFormat,
+      });
+
+      const tpSeries = chart.addLineSeries({
+        color: "#63c787",
+        lineWidth: 1,
+        lineStyle: LineStyle.Solid,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+        lastPriceAnimation: 0,
+        priceFormat: commonPriceFormat,
+      });
+
+      chartRef.current = chart;
+      candleSeriesRef.current = candleSeries;
+      entrySeriesRef.current = entrySeries;
+      slSeriesRef.current = slSeries;
+      tpSeriesRef.current = tpSeries;
+      profitAboveRef.current = profitAbove;
+      profitBelowRef.current = profitBelow;
+      lossAboveRef.current = lossAbove;
+      lossBelowRef.current = lossBelow;
+
+      const onResize = () => {
+        if (!containerRef.current || !chartRef.current) return;
+        const width = containerRef.current.clientWidth || 0;
+        if (width < 50) return;
+
+        try {
+          chartRef.current.applyOptions({
+            width,
+            height: 520,
+          });
+        } catch {}
+      };
+
+      const resizeObserver = new ResizeObserver(onResize);
+      resizeObserver.observe(el);
+      resizeObserverRef.current = resizeObserver;
+    } catch (err) {
+      console.error("Charts init error:", err);
+    }
 
     return () => {
-      window.removeEventListener("resize", onResize);
-      chart.remove();
+      try {
+        resizeObserverRef.current?.disconnect();
+      } catch {}
+
+      try {
+        chartRef.current?.remove();
+      } catch {}
+
+      resizeObserverRef.current = null;
       chartRef.current = null;
-      seriesRef.current = null;
+      candleSeriesRef.current = null;
+      entrySeriesRef.current = null;
+      slSeriesRef.current = null;
+      tpSeriesRef.current = null;
+      profitAboveRef.current = null;
+      profitBelowRef.current = null;
+      lossAboveRef.current = null;
+      lossBelowRef.current = null;
     };
-  }, []);
+  }, [chartKey, digits, minMove, accent]);
 
   useEffect(() => {
-    const series = seriesRef.current;
-    const chart = chartRef.current;
-    if (!series || !chart) return;
+    if (!chartRef.current) return;
 
-    const normalized = normalizeCandles(candles);
+    try {
+      chartRef.current.applyOptions({
+        localization: {
+          priceFormatter: (price) => Number(price).toFixed(digits),
+        },
+      });
 
-    // setData exige time asc y sin duplicados
-    series.setData(normalized);
+      const priceFormat = {
+        type: "price",
+        precision: digits,
+        minMove,
+      };
 
-    // opcional: autoscale al final si hay datos
-    if (normalized.length > 5) {
-      chart.timeScale().fitContent();
+      candleSeriesRef.current?.applyOptions({ priceFormat });
+      entrySeriesRef.current?.applyOptions({ color: accent, priceFormat });
+      slSeriesRef.current?.applyOptions({ priceFormat });
+      tpSeriesRef.current?.applyOptions({ priceFormat });
+      profitAboveRef.current?.applyOptions({ priceFormat });
+      profitBelowRef.current?.applyOptions({ priceFormat });
+      lossAboveRef.current?.applyOptions({ priceFormat });
+      lossBelowRef.current?.applyOptions({ priceFormat });
+    } catch {}
+  }, [digits, minMove, accent]);
+
+  useEffect(() => {
+    if (!candleSeriesRef.current || !chartRef.current) return;
+
+    if (data && data.length >= 2) {
+      lastGoodCandlesRef.current = data;
     }
-  }, [candles]);
 
-  return <div ref={ref} style={{ width: "100%", height: 520 }} />;
+    const safeData = data && data.length >= 2 ? data : lastGoodCandlesRef.current;
+
+    if (!safeData || safeData.length < 2) return;
+    if (lastCandlesSignatureRef.current === candlesSignature) return;
+
+    lastCandlesSignatureRef.current = candlesSignature;
+
+    try {
+      candleSeriesRef.current.setData(safeData);
+
+      if (!hasFittedRef.current) {
+        hasFittedRef.current = true;
+        requestAnimationFrame(() => {
+          try {
+            chartRef.current?.timeScale().fitContent();
+          } catch {}
+        });
+      }
+    } catch (err) {
+      console.error("Charts setData error:", err);
+    }
+  }, [data, candlesSignature]);
+
+  useEffect(() => {
+    if (
+      !entrySeriesRef.current ||
+      !slSeriesRef.current ||
+      !tpSeriesRef.current ||
+      !profitAboveRef.current ||
+      !profitBelowRef.current ||
+      !lossAboveRef.current ||
+      !lossBelowRef.current
+    ) {
+      return;
+    }
+
+    if (lastTradeSignatureRef.current === tradeSignature) return;
+    lastTradeSignatureRef.current = tradeSignature;
+
+    try {
+      if (!tradeLines.hasValidTrade) {
+        clearTradeSeries({
+          entrySeriesRef,
+          slSeriesRef,
+          tpSeriesRef,
+          profitAboveRef,
+          profitBelowRef,
+          lossAboveRef,
+          lossBelowRef,
+        });
+        return;
+      }
+
+      const entryBase = tradeLines.entry;
+
+      entrySeriesRef.current.setData(tradeLines.entryData);
+      slSeriesRef.current.setData(tradeLines.slData);
+      tpSeriesRef.current.setData(tradeLines.tpData);
+
+      profitAboveRef.current.applyOptions({
+        baseValue: { type: "price", price: entryBase },
+      });
+      profitBelowRef.current.applyOptions({
+        baseValue: { type: "price", price: entryBase },
+      });
+      lossAboveRef.current.applyOptions({
+        baseValue: { type: "price", price: entryBase },
+      });
+      lossBelowRef.current.applyOptions({
+        baseValue: { type: "price", price: entryBase },
+      });
+
+      profitAboveRef.current.setData(tradeLines.profitAboveData);
+      profitBelowRef.current.setData(tradeLines.profitBelowData);
+      lossAboveRef.current.setData(tradeLines.lossAboveData);
+      lossBelowRef.current.setData(tradeLines.lossBelowData);
+    } catch (err) {
+      console.error("Charts trade lines error:", err);
+      clearTradeSeries({
+        entrySeriesRef,
+        slSeriesRef,
+        tpSeriesRef,
+        profitAboveRef,
+        profitBelowRef,
+        lossAboveRef,
+        lossBelowRef,
+      });
+    }
+  }, [tradeLines, tradeSignature]);
+
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: 520,
+        position: "relative",
+        background: "#0b0f14",
+      }}
+    >
+      <div
+        ref={containerRef}
+        style={{
+          width: "100%",
+          height: "100%",
+        }}
+      />
+    </div>
+  );
 }

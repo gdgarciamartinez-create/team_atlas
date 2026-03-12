@@ -1,168 +1,222 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
-import math
-import time
+from typing import Dict, List, Tuple, Any
 
-from atlas.bot.worlds.feed import get_feed_with_meta
-
-
-def _now_ms() -> int:
-    return int(time.time() * 1000)
+from atlas.api.risk import calc_lots_from_score
+from atlas.bot.analysis.sweep import detect_sweep
+from atlas.bot.analysis.scoring import calc_score
 
 
-def _f(x: Any) -> Optional[float]:
-    try:
-        v = float(x)
-        return v if math.isfinite(v) else None
-    except Exception:
+def _micro_impulse(candles: List[Dict[str, Any]]):
+    if len(candles) < 16:
         return None
 
+    window = candles[-16:]
+    high = max(c["h"] for c in window)
+    low = min(c["l"] for c in window)
 
-def run_scalping_m1(symbol: str, tf: str, candles: List[Dict[str, Any]], digits: int):
-    """
-    Lógica simple M1 (tu lógica original).
-    Devuelve dict con action WAIT|SIGNAL y niveles.
-    """
-    if len(candles) < 30:
-        return {
-            "symbol": symbol,
-            "tf": tf,
-            "text": "WAIT (historial corto)",
-            "action": "WAIT",
-            "side": None,
-            "entry": None,
-            "sl": None,
-            "tp": None,
-        }
+    if high == low:
+        return None
 
-    last = candles[-1]
-    prev = candles[-2]
+    direction = "BUY" if candles[-1]["c"] > candles[-8]["c"] else "SELL"
 
-    lc = _f(last.get("c"))
-    pc = _f(prev.get("c"))
+    return {
+        "high": high,
+        "low": low,
+        "dir": direction,
+        "range": abs(high - low),
+    }
 
-    if lc is None or pc is None:
-        return {
-            "symbol": symbol,
-            "tf": tf,
-            "text": "WAIT (datos incompletos)",
-            "action": "WAIT",
-            "side": None,
-            "entry": None,
-            "sl": None,
-            "tp": None,
-        }
 
-    impulse = lc - pc
-    threshold = abs(pc) * 0.0002
+def _zone_from_impulse(impulse: Dict[str, Any]) -> Tuple[float, float]:
+    high = float(impulse["high"])
+    low = float(impulse["low"])
+    direction = impulse["dir"]
 
-    if abs(impulse) > threshold:
-        side = "BUY" if impulse > 0 else "SELL"
-        entry = round(lc, digits)
-        sl = round(pc, digits)
-        tp = round(entry + impulse * 2, digits)
+    if direction == "BUY":
+        z1 = high - (high - low) * 0.382
+        z2 = high - (high - low) * 0.786
+        return min(z1, z2), max(z1, z2)
 
-        return {
-            "symbol": symbol,
-            "tf": tf,
-            "text": "M1: Micro ruptura activa",
-            "action": "SIGNAL",
-            "side": side,
-            "entry": entry,
-            "sl": sl,
-            "tp": tp,
-        }
+    z1 = low + (high - low) * 0.382
+    z2 = low + (high - low) * 0.786
+    return min(z1, z2), max(z1, z2)
 
+
+def _rr(entry: float, sl: float, tp: float) -> float:
+    risk = abs(entry - sl)
+    reward = abs(tp - entry)
+    if risk <= 0:
+        return 0.0
+    return reward / risk
+
+
+def _build_wait_row(symbol: str, tf: str, note: str) -> Dict[str, Any]:
     return {
         "symbol": symbol,
         "tf": tf,
-        "text": "WAIT (sin micro ruptura)",
+        "score": 0,
+        "state": "SIN_SETUP",
+        "text": note,
         "action": "WAIT",
         "side": None,
         "entry": None,
         "sl": None,
         "tp": None,
+        "parcial": None,
+        "lot": None,
+        "risk_percent": 0.0,
+        "rr": 0.0,
+        "sweep_valid": False,
+        "sweep_strength": 0.0,
+        "zone_low": None,
+        "zone_high": None,
+        "note": note,
     }
 
 
-def build_snapshot(
-    symbol: str = "XAUUSDz",
-    tf: str = "M1",
-    n: int = 220,
-) -> Dict[str, Any]:
-    """
-    Snapshot estándar para ATLAS_IA (SCALPING_M1).
-    - Trae velas del feed fake
-    - Corre run_scalping_m1
-    - Devuelve contrato con state + (entry/sl/tp) en ROOT cuando es SIGNAL
-    """
-    candles, meta = get_feed_with_meta(symbol=symbol, tf=tf, n=n)
-    meta = meta or {}
+def _resolve_state(score: int, inside_zone: bool, near_zone: bool, sweep_valid: bool) -> str:
+    if inside_zone and sweep_valid and score >= 9:
+        return "ENTRY"
+    if inside_zone and score >= 8:
+        return "SET_UP"
+    if near_zone and score >= 7:
+        return "SET_UP"
+    if sweep_valid and score >= 7:
+        return "SET_UP"
+    return "SIN_SETUP"
 
-    digits = int(meta.get("digits", 2) or 2)
-    price = float(meta.get("last_price", 0.0) or 0.0)
-    if candles:
-        last_c = candles[-1].get("c")
-        px = _f(last_c)
-        if px is not None:
-            price = float(px)
 
-    result = run_scalping_m1(symbol, tf, candles or [], digits)
+def run_world_rows(
+    world: str,
+    tf: str,
+    symbols: List[str],
+    candles_by_symbol: Dict[str, Any],
+) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
 
-    state = (result.get("action") or "WAIT").upper()
-    side = result.get("side") or "WAIT"
+    symbol = symbols[0]
+    payload = candles_by_symbol[symbol]
+    candles = payload["candles"]
 
-    entry = result.get("entry") or 0.0
-    sl = result.get("sl") or 0.0
-    tp = result.get("tp") or 0.0
+    if not isinstance(candles, list) or len(candles) < 16:
+        row = _build_wait_row(symbol, tf, "Sin micro impulso")
+        return (
+            {"world": world, "action": "WAIT", "signals": 0, "reason": "Sin micro impulso", "score": 0},
+            [row],
+        )
 
-    trade = None
-    if state == "SIGNAL" and side in ("BUY", "SELL") and entry and sl and tp:
-        trade = {"side": side, "entry": float(entry), "sl": float(sl), "tp": float(tp)}
+    impulse = _micro_impulse(candles)
+    if not impulse:
+        row = _build_wait_row(symbol, tf, "Sin micro impulso")
+        return (
+            {"world": world, "action": "WAIT", "signals": 0, "reason": "Sin micro impulso", "score": 0},
+            [row],
+        )
 
-    return {
-        "ok": True,
-        "world": "ATLAS_IA",
-        "atlas_mode": "SCALPING_M1",
+    last = candles[-1]
+    last_price = float(last["c"])
+    direction = impulse["dir"]
+    impulse_range = float(impulse["range"])
+
+    if impulse_range <= 0:
+        row = _build_wait_row(symbol, tf, "Rango inválido")
+        return (
+            {"world": world, "action": "WAIT", "signals": 0, "reason": "Rango inválido", "score": 0},
+            [row],
+        )
+
+    zone_low, zone_high = _zone_from_impulse(impulse)
+    zone_buffer = impulse_range * 0.15
+
+    inside_zone = zone_low <= last_price <= zone_high
+    near_zone = (zone_low - zone_buffer) <= last_price <= (zone_high + zone_buffer)
+
+    sl = float(impulse["low"]) if direction == "BUY" else float(impulse["high"])
+    tp = last_price + (impulse_range * 1.2) if direction == "BUY" else last_price - (impulse_range * 1.2)
+    parcial = last_price + (tp - last_price) * 0.5
+
+    sweep = detect_sweep(candles, side=direction, lookback=10)
+
+    last_4_dir = 0
+    closes = [c["c"] for c in candles[-5:]]
+    for i in range(1, len(closes)):
+        if direction == "BUY" and closes[i] >= closes[i - 1]:
+            last_4_dir += 1
+        elif direction == "SELL" and closes[i] <= closes[i - 1]:
+            last_4_dir += 1
+
+    context_ok = True
+    timing_ok = inside_zone or last_4_dir >= 2
+    structure_dirty = False
+    late_entry = not near_zone
+    spread_bad = False
+    confluence_bonus = 1 if near_zone else 0
+
+    score_pack = calc_score(
+        side=direction,
+        entry=last_price,
+        sl=sl,
+        tp=tp,
+        sweep=sweep,
+        context_ok=context_ok,
+        timing_ok=timing_ok,
+        zone_touch_count=1,
+        late_entry=late_entry,
+        structure_dirty=structure_dirty,
+        spread_bad=spread_bad,
+        confluence_bonus=confluence_bonus,
+    )
+
+    score = int(score_pack["score"])
+    state = _resolve_state(score, inside_zone, near_zone, bool(sweep["valid"]))
+
+    # Forzamos SET_UP si está cerca de zona aunque el score venga tímido
+    if state == "SIN_SETUP" and near_zone and score >= 6:
+        state = "SET_UP"
+        score = max(score, 7)
+
+    lots, risk_percent = calc_lots_from_score(
+        symbol=symbol,
+        entry=last_price,
+        sl=sl,
+        score=score if state == "ENTRY" else 0,
+    )
+
+    row = {
         "symbol": symbol,
         "tf": tf,
-        "ts_ms": _now_ms(),
-        "candles": candles or [],
-        "meta": meta,
-
-        # Estado + precios
+        "score": score,
         "state": state,
-        "side": side if side in ("BUY", "SELL") else "WAIT",
-        "price": float(price),
-
-        # ROOT levels (para bitácora)
-        "entry": float(entry) if entry else 0.0,
-        "sl": float(sl) if sl else 0.0,
-        "tp": float(tp) if tp else 0.0,
-        "trade": trade,
-
-        "note": result.get("text") or "",
-
-        "analysis": {
-            "state": state,
-            "side": side,
-            "entry": float(entry) if entry else None,
-            "sl": float(sl) if sl else None,
-            "tp": float(tp) if tp else None,
-            "text": result.get("text"),
-        },
-        "ui": {
-            "rows": [
-                {"k": "Modo", "v": "SCALPING_M1"},
-                {"k": "Estado", "v": state},
-                {"k": "Lado", "v": side},
-                {"k": "Precio", "v": float(price)},
-                {"k": "Entry", "v": float(entry) if entry else ""},
-                {"k": "SL", "v": float(sl) if sl else ""},
-                {"k": "TP", "v": float(tp) if tp else ""},
-                {"k": "Nota", "v": result.get("text") or ""},
-            ]
-        },
-        "last_error": None,
+        "text": f"{direction} micro" if state != "SIN_SETUP" else "SIN_SETUP",
+        "action": direction if state in {"SET_UP", "ENTRY"} else "WAIT",
+        "side": direction if state in {"SET_UP", "ENTRY"} else None,
+        "entry": last_price if state in {"SET_UP", "ENTRY"} else None,
+        "sl": sl if state in {"SET_UP", "ENTRY"} else None,
+        "tp": tp if state in {"SET_UP", "ENTRY"} else None,
+        "parcial": parcial if state in {"SET_UP", "ENTRY"} else None,
+        "lot": lots if state == "ENTRY" and lots > 0 else None,
+        "risk_percent": risk_percent if state == "ENTRY" else 0.0,
+        "rr": score_pack["rr"],
+        "sweep_valid": sweep["valid"],
+        "sweep_strength": sweep["strength"],
+        "zone_low": zone_low,
+        "zone_high": zone_high,
+        "candles": candles,
+        "note": f'{state} · score {score} · RR {score_pack["rr"]} · {sweep["reason"]}',
     }
+
+    analysis = {
+        "world": world,
+        "action": direction if state in {"SET_UP", "ENTRY"} else "WAIT",
+        "signals": 1 if state in {"SET_UP", "ENTRY"} else 0,
+        "reason": row["note"],
+        "score": score,
+        "side": direction,
+        "state": state,
+        "rr": score_pack["rr"],
+        "sweep_valid": sweep["valid"],
+        "zone_low": zone_low,
+        "zone_high": zone_high,
+    }
+
+    return analysis, [row]

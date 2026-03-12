@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "saved_ms": 1772637376840,
+  "items": {
+    "ATLAS_IA|SCALPING_M1|EURUSDZ|M1": {
+      "world": "ATLAS_IA",
+      "atlas_mode": "SCALPING_M1",
+      "symbol": "EURUSDZ",
+      "tf": "M1",
+      "phase": "ZONA",
+      "last_note": "WAIT_GATILLO",
+      "plan": {
+        "bias": "SELL",
+        "zone_lo": 1.162206,
+        "zone_hi": 1.1624640000000002,
+        "note": "plan congelado (zona detectada)",
+        "plan_hash": "cf9e67101a"
+      },
+      "signal": {
+        "side": "WAIT",
+        "entry": 0.0,
+        "sl": 0.0,
+        "tp": 0.0,
+        "signal_id": ""
+      },
+      "created_ms": 1772637343577,
+      "updated_ms": 1772637376840,
+      "signal_started_ms": 0,
+      "signal_bars_alive": 0,
+      "last_candle_t": 0
+    }
+  }
+}

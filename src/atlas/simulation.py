@@ -1,50 +1,60 @@
+# src/atlas/simulation.py
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Dict
-import time
 
-@dataclass
-class SimAccount:
-    balance: float = 10000.0
-    currency: str = "USD"
-    trades_analyzed: int = 0
-    wins: int = 0
-    losses: int = 0
-    total_rr: float = 0.0
-    updated_ts: int = 0
+from typing import Any, Dict, List
 
-    @property
-    def winrate(self) -> float:
-        if self.trades_analyzed == 0:
-            return 0.0
-        return round((self.wins / self.trades_analyzed) * 100.0, 1)
 
-    @property
-    def avg_rr(self) -> float:
-        if self.trades_analyzed == 0:
-            return 0.0
-        return round(self.total_rr / self.trades_analyzed, 2)
+def _to_float(x: Any, default: float = 0.0) -> float:
+    try:
+        return float(x)
+    except Exception:
+        return default
 
-SIM = SimAccount()
 
-def sim_snapshot() -> Dict:
+def _get_ohlc(c: Any, key1: str, key2: str) -> float:
+    """
+    Soporta:
+    - dict con 'o/h/l/c'
+    - dict con 'open/high/low/close'
+    """
+    if isinstance(c, dict):
+        return _to_float(c.get(key1, c.get(key2, 0.0)))
+    return 0.0
+
+
+def calculate_poi(candles: List[Dict[str, Any]], *, lookback: int = 80) -> Dict[str, Any]:
+    """
+    POI simple y estable para no romper el backend:
+    - toma las últimas N velas
+    - calcula hi/lo del rango y devuelve el mid como poi
+
+    Retorna dict SIEMPRE (ok True/False).
+    """
+    if not isinstance(candles, list) or len(candles) < 5:
+        return {
+            "ok": False,
+            "reason": "NOT_ENOUGH_CANDLES",
+            "poi": 0.0,
+            "hi": 0.0,
+            "lo": 0.0,
+            "last": 0.0,
+            "lookback": int(lookback),
+        }
+
+    n = max(5, int(lookback))
+    use = candles[-n:]
+
+    hi = max(_get_ohlc(x, "h", "high") for x in use)
+    lo = min(_get_ohlc(x, "l", "low") for x in use)
+    last = _get_ohlc(use[-1], "c", "close")
+
+    poi = (hi + lo) / 2.0
+
     return {
-        "balance": SIM.balance,
-        "currency": SIM.currency,
-        "trades": SIM.trades_analyzed,
-        "wins": SIM.wins,
-        "losses": SIM.losses,
-        "winrate": SIM.winrate,
-        "avg_rr": SIM.avg_rr,
-        "updated_ts": SIM.updated_ts,
+        "ok": True,
+        "poi": poi,
+        "hi": hi,
+        "lo": lo,
+        "last": last,
+        "lookback": n,
     }
-
-def sim_touch(rr: float, win: bool) -> None:
-    # NO se usa para trading real. Solo laboratorio.
-    SIM.trades_analyzed += 1
-    if win:
-        SIM.wins += 1
-    else:
-        SIM.losses += 1
-    SIM.total_rr += float(rr)
-    SIM.updated_ts = int(time.time())

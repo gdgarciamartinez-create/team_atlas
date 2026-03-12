@@ -1,441 +1,343 @@
+# src/atlas/snapshot_core.py
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
-import time
-import uuid
-import hashlib
-
-from atlas.bot.state import (
-    get_world_state,
-    PHASE_WAIT,
-    PHASE_ZONA,
-    PHASE_GATILLO,
-)
-
-# Bitácora (Opción B)
-try:
-    from atlas.bot.bitacora.engine import process_snapshot_for_bitacora  # type: ignore
-except Exception:
-    process_snapshot_for_bitacora = None  # type: ignore
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from importlib import import_module
+from typing import Any, Dict, List, Optional, Tuple, Callable
 
 
-# ============================================================
-# Utils
-# ============================================================
-def _now_ms() -> int:
-    return int(time.time() * 1000)
+@dataclass
+class UIScannerRow:
+    symbol: str
+    tf: str
+    score: int = 0
+    state: str = "WAIT"
+    entry: Optional[float] = None
+    sl: Optional[float] = None
+    tp: Optional[float] = None
+    lot: Optional[float] = None
+    reason: Optional[str] = None
 
 
-def _f(x: Any, default: float = 0.0) -> float:
+@dataclass
+class SnapshotAnalysis:
+    status: str = "OK"
+    world: str = ""
+    symbol: str = ""
+    tf: str = ""
+    atlas_mode: Optional[str] = None
+    provider: str = "mt5"
+    last_error: Optional[Tuple[int, str]] = None
+    msg: Optional[str] = None
+    ts: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
+
+
+def _safe_last_error(err: Any) -> Optional[Tuple[int, str]]:
+    if err is None:
+        return None
     try:
-        return float(x)
+        code, text = err
+        code_i = int(code)
+        text_s = str(text)
+        if code_i == 1 and text_s.strip().lower() == "success":
+            return None
+        return (code_i, text_s)
     except Exception:
-        return default
-
-
-def _s(x: Any, default: str = "") -> str:
-    try:
-        return str(x)
-    except Exception:
-        return default
-
-
-def _normalize_side(side: Any) -> str:
-    s = _s(side, "").upper().strip()
-    return s if s in ("BUY", "SELL") else "WAIT"
+        return (999, str(err))
 
 
 def _normalize_tf(tf: str) -> str:
-    t = (tf or "").upper().strip()
-    return t or "M1"
+    tf = (tf or "").strip().upper()
+    allowed = {"M1", "M3", "M5", "M15", "H1", "H4", "D1"}
+    return tf if tf in allowed else "M5"
 
 
-def _normalize_candles(raw: Any) -> List[Dict[str, Any]]:
-    """
-    Siempre: [{t,o,h,l,c,v}, ...]
-    """
-    if raw is None:
-        return []
-
-    if isinstance(raw, dict) and "candles" in raw:
-        raw = raw.get("candles")
-
-    if not isinstance(raw, list):
-        return []
-
-    out: List[Dict[str, Any]] = []
-    for c in raw:
-        if not isinstance(c, dict):
-            continue
-        t = c.get("t", c.get("time", 0))
-        o = c.get("o", c.get("open", 0))
-        h = c.get("h", c.get("high", 0))
-        l = c.get("l", c.get("low", 0))
-        cl = c.get("c", c.get("close", 0))
-        v = c.get("v", c.get("tick_volume", c.get("volume", 0)))
-        out.append({"t": int(_f(t, 0)), "o": _f(o), "h": _f(h), "l": _f(l), "c": _f(cl), "v": _f(v)})
-    return out
+def _normalize_symbol(symbol: str) -> str:
+    return (symbol or "").strip()
 
 
-def _last_close(candles: List[Dict[str, Any]]) -> float:
-    return _f(candles[-1].get("c"), 0.0) if candles else 0.0
+def _normalize_world(world: str) -> str:
+    w = (world or "").strip().upper()
+    allowed = {"ATLAS_IA", "SCALPING_M1", "SCALPING_M5", "FOREX", "GAP"}
+    return w if w in allowed else "ATLAS_IA"
 
 
-def _plan_hash(symbol: str, tf: str, side: str, zlo: float, zhi: float) -> str:
-    s = f"{symbol}|{tf}|{side}|{zlo:.6f}|{zhi:.6f}"
-    return hashlib.sha1(s.encode("utf-8")).hexdigest()[:10]
+def _normalize_atlas_mode(mode: Optional[str]) -> Optional[str]:
+    if mode is None:
+        return None
+    m = str(mode).strip().upper()
+    allowed = {"SCALPING", "FOREX"}
+    return m if m in allowed else None
 
 
-def _ensure_attrs(obj: Any, **defaults: Any) -> None:
-    """
-    No asumimos qué trae WorldState; si le faltan attrs, los creamos.
-    """
-    for k, v in defaults.items():
-        if not hasattr(obj, k):
-            try:
-                setattr(obj, k, v)
-            except Exception:
-                pass
-
-
-# ============================================================
-# Provider (MT5/Fake) - fallback seguro
-# ============================================================
-def _get_candles(symbol: str, tf: str, count: int) -> Tuple[List[Dict[str, Any]], Dict[str, Any], Optional[str]]:
-    """
-    Retorna: (candles, meta, error_str)
-    """
-    try:
-        from atlas.api.routes.mt5_provider import get_candles_payload  # type: ignore
-
-        data = get_candles_payload(world="ATLAS_IA", symbol=symbol, tf=tf, count=count)
-        candles = _normalize_candles(data)
-        meta = {"source": "mt5_provider"}
-        return candles, meta, None
-    except Exception as e1:
-        try:
-            from atlas.bot.worlds.feed import get_feed_with_meta  # type: ignore
-
-            candles2, meta2 = get_feed_with_meta(symbol=symbol, tf=tf, n=count)
-            candles2 = _normalize_candles(candles2)
-            meta2 = meta2 if isinstance(meta2, dict) else {}
-            meta2["source"] = "feed"
-            return candles2, meta2, None
-        except Exception as e2:
-            return [], {"source": "none"}, f"{type(e1).__name__}: {e1} | {type(e2).__name__}: {e2}"
-
-
-# ============================================================
-# Motores (simple, estable)
-# Estados: WAIT / WAIT_GATILLO / SIGNAL
-#
-# Internamente:
-#   PHASE_WAIT      -> "WAIT"
-#   PHASE_ZONA      -> "WAIT_GATILLO"  (plan congelado)
-#   PHASE_GATILLO   -> "SIGNAL"
-# ============================================================
-def _engine_scalping(symbol: str, tf: str, candles: List[Dict[str, Any]], *, st: Any) -> Dict[str, Any]:
-    _ensure_attrs(st, phase=PHASE_WAIT, last_note="")
-    _ensure_attrs(st, plan=type("Plan", (), {})())
-    _ensure_attrs(st, signal=type("Signal", (), {})())
-
-    _ensure_attrs(st.plan, bias="WAIT", zone_lo=0.0, zone_hi=0.0, note="", plan_hash="")
-    _ensure_attrs(st.signal, side="WAIT", entry=0.0, sl=0.0, tp=0.0, signal_id="")
-
-    if len(candles) < 30:
-        st.phase = PHASE_WAIT
-        return {
-            "phase": PHASE_WAIT,
-            "side": "WAIT",
-            "reason": "NOT_ENOUGH_CANDLES",
-            "note": "historial corto",
-            "plan_hash": "",
-            "entry": 0.0,
-            "sl": 0.0,
-            "tp": 0.0,
-        }
-
-    closes = [_f(c.get("c"), 0.0) for c in candles[-30:]]
-    highs = [_f(c.get("h"), 0.0) for c in candles[-30:]]
-    lows = [_f(c.get("l"), 0.0) for c in candles[-30:]]
-
-    if not closes or not highs or not lows:
-        st.phase = PHASE_WAIT
-        return {
-            "phase": PHASE_WAIT,
-            "side": "WAIT",
-            "reason": "INCOMPLETE_DATA",
-            "note": "datos incompletos",
-            "plan_hash": "",
-            "entry": 0.0,
-            "sl": 0.0,
-            "tp": 0.0,
-        }
-
-    price = closes[-1]
-
-    # --------------------------------------------------------
-    # ✅ 4.2: si YA estamos en WAIT_GATILLO, NO recalcular plan.
-    # --------------------------------------------------------
-    if st.phase == PHASE_ZONA and st.plan.zone_lo and st.plan.zone_hi and st.plan.bias in ("BUY", "SELL"):
-        zlo = float(st.plan.zone_lo)
-        zhi = float(st.plan.zone_hi)
-        side = str(st.plan.bias)
-
-        in_zone = (zlo <= price <= zhi)
-
-        # gatillo: 2 cierres seguidos fuera a favor (igual que antes)
-        c1 = closes[-2]
-        c2 = closes[-1]
-        fired = False
-        if side == "BUY":
-            fired = (c1 > zhi) and (c2 > zhi) and (not in_zone)
-        else:
-            fired = (c1 < zlo) and (c2 < zlo) and (not in_zone)
-
-        if fired:
-            entry = float(c2)
-            if side == "BUY":
-                sl = float(zlo)
-                tp = float(entry + (entry - sl) * 1.5)
-            else:
-                sl = float(zhi)
-                tp = float(entry - (sl - entry) * 1.5)
-
-            st.signal.side = side
-            st.signal.entry = entry
-            st.signal.sl = sl
-            st.signal.tp = tp
-            st.signal.signal_id = st.signal.signal_id or str(uuid.uuid4())[:8]
-
-            st.plan.note = "plan congelado, gatillo confirmado"
-            st.last_note = "SIGNAL"
-            st.phase = PHASE_GATILLO
-
-            return {
-                "phase": PHASE_GATILLO,
-                "side": side,
-                "reason": "TRIGGER_OK",
-                "note": "SIGNAL: 2 cierres confirmatorios",
-                "plan_hash": str(st.plan.plan_hash or ""),
-                "entry": entry,
-                "sl": sl,
-                "tp": tp,
-            }
-
-        # seguimos esperando gatillo, plan congelado
-        st.last_note = "WAIT_GATILLO"
-        return {
-            "phase": PHASE_ZONA,
-            "side": side,
-            "reason": "WAITING_TRIGGER",
-            "note": "WAIT_GATILLO: plan congelado",
-            "plan_hash": str(st.plan.plan_hash or ""),
-            "entry": 0.0,
-            "sl": 0.0,
-            "tp": 0.0,
-        }
-
-    # --------------------------------------------------------
-    # Si NO hay plan congelado, calculamos zona NUEVA (solo aquí)
-    # --------------------------------------------------------
-    hi = max(highs)
-    lo = min(lows)
-    rng = hi - lo
-    if rng <= 0:
-        st.phase = PHASE_WAIT
-        return {
-            "phase": PHASE_WAIT,
-            "side": "WAIT",
-            "reason": "RANGE_ZERO",
-            "note": "rango nulo",
-            "plan_hash": "",
-            "entry": 0.0,
-            "sl": 0.0,
-            "tp": 0.0,
-        }
-
-    zlo = lo + rng * 0.40
-    zhi = lo + rng * 0.60
-
-    drift = closes[-1] - closes[0]
-    side = "BUY" if drift > 0 else "SELL" if drift < 0 else "WAIT"
-
-    in_zone = (zlo <= price <= zhi)
-
-    # si entra en zona: congelamos plan => WAIT_GATILLO
-    if in_zone and side in ("BUY", "SELL"):
-        st.plan.bias = side
-        st.plan.zone_lo = float(zlo)
-        st.plan.zone_hi = float(zhi)
-        st.plan.plan_hash = _plan_hash(symbol, tf, side, float(zlo), float(zhi))
-        st.plan.note = "plan congelado (zona detectada)"
-        st.last_note = "WAIT_GATILLO"
-        st.phase = PHASE_ZONA  # internamente ZONA
-
-        return {
-            "phase": PHASE_ZONA,
-            "side": side,
-            "reason": "PLAN_FROZEN",
-            "note": "WAIT_GATILLO: plan congelado",
-            "plan_hash": str(st.plan.plan_hash or ""),
-            "entry": 0.0,
-            "sl": 0.0,
-            "tp": 0.0,
-        }
-
-    # si no está en zona: WAIT normal
-    st.phase = PHASE_WAIT
-    st.plan.bias = side  # informativo, NO congelado
-    st.plan.note = "esperando zona"
-    st.last_note = "WAIT"
+def _base_snapshot(world: str, symbol: str, tf: str, count: int, atlas_mode: Optional[str]) -> Dict[str, Any]:
+    analysis = SnapshotAnalysis(
+        status="OK",
+        world=world,
+        symbol=symbol,
+        tf=tf,
+        atlas_mode=atlas_mode,
+        provider="mt5",
+        last_error=None,
+        msg=None,
+    )
     return {
-        "phase": PHASE_WAIT,
-        "side": side,
-        "reason": "WAITING_ZONE",
-        "note": "WAIT: fuera de zona",
-        "plan_hash": "",
-        "entry": 0.0,
-        "sl": 0.0,
-        "tp": 0.0,
+        "ok": True,
+        "world": world,
+        "symbol": symbol,
+        "tf": tf,
+        "count": int(count),
+        "atlas_mode": atlas_mode,
+        "analysis": asdict(analysis),
+        "ui": {"rows": []},
     }
 
 
-def _engine_forex(symbol: str, tf: str, candles: List[Dict[str, Any]], *, st: Any) -> Dict[str, Any]:
-    return _engine_scalping(symbol, tf, candles, st=st)
+def _finalize(base: Dict[str, Any], analysis: SnapshotAnalysis, rows: List[UIScannerRow]) -> Dict[str, Any]:
+    base["analysis"] = asdict(analysis)
+    base["ui"] = {"rows": [asdict(r) for r in rows]}
+    base["ok"] = analysis.status not in ("PROVIDER_ERROR", "ENGINE_ERROR", "INVALID_REQUEST")
+    return base
 
 
-def _public_state(phase: str) -> str:
-    if phase == PHASE_ZONA:
-        return "WAIT_GATILLO"
-    if phase == PHASE_GATILLO:
-        return "SIGNAL"
-    return "WAIT"
+def _try_import(module_path: str) -> Any:
+    try:
+        return import_module(module_path)
+    except Exception:
+        return None
 
 
-# ============================================================
-# Build snapshot (único)
-# ============================================================
+def _wrap_mt5_provider_functions(mod: Any) -> Any:
+    candles_fn = getattr(mod, "get_candles", None)
+    if not callable(candles_fn):
+        return None
+
+    class _ModuleProviderWrapper:
+        def __init__(self, candles_func: Callable[..., Any], module_obj: Any) -> None:
+            self._fn = candles_func
+            self._mod = module_obj
+
+        @property
+        def last_error(self) -> Any:
+            return getattr(self._mod, "last_error", None)
+
+        def get_candles(self, *, symbol: str, tf: str, count: int) -> Any:
+            return self._fn(symbol=symbol, tf=tf, count=int(count))
+
+    return _ModuleProviderWrapper(candles_fn, mod)
+
+
+def _get_provider() -> Any:
+    mod = _try_import("atlas.providers.mt5_provider")
+    if mod is None:
+        return None
+    return _wrap_mt5_provider_functions(mod)
+
+
+def _fetch_market_data(provider: Any, symbol: str, tf: str, count: int) -> Dict[str, Any]:
+    out = {"ok": False, "candles": [], "last_error": None, "reason": None}
+
+    if provider is None:
+        out["last_error"] = (500, "MT5 provider not available")
+        out["reason"] = "provider is None"
+        return out
+
+    try:
+        raw = provider.get_candles(symbol=symbol, tf=tf, count=int(count))
+
+        # ✅ si provider retorna dict (como tu mt5_provider), respetar raw["ok"]
+        if isinstance(raw, dict):
+            ok = bool(raw.get("ok", False))
+            candles = raw.get("candles", [])
+            out["reason"] = raw.get("reason")
+            out["last_error"] = _safe_last_error(raw.get("last_error"))
+
+            if not ok:
+                out["ok"] = False
+                out["candles"] = []
+                return out
+
+            # ok=True pero sin velas -> también es error práctico (no alimentar engines)
+            if not isinstance(candles, list) or len(candles) == 0:
+                out["ok"] = False
+                out["candles"] = []
+                out["last_error"] = out["last_error"] or (502, "MT5 ok=True but returned empty candles")
+                return out
+
+            out["ok"] = True
+            out["candles"] = candles
+            return out
+
+        # fallback: si retorna lista directa
+        if not isinstance(raw, list) or len(raw) == 0:
+            out["last_error"] = (502, f"MT5 returned invalid candles type: {type(raw).__name__}")
+            out["reason"] = "invalid raw candles"
+            return out
+
+        out["ok"] = True
+        out["candles"] = raw
+        return out
+
+    except Exception as e:
+        out["last_error"] = (501, str(e))
+        out["reason"] = "exception calling provider"
+        return out
+
+
+def _import_engine_builder(module_path: str, fn_name: str) -> Any:
+    try:
+        mod = import_module(module_path)
+        return getattr(mod, fn_name, None)
+    except Exception:
+        return None
+
+build_gap_snapshot = _import_engine_builder("atlas.engines.gap_engine", "build_gap_snapshot")
+build_scalping_snapshot = _import_engine_builder("atlas.engines.scalping_engine", "build_scalping_snapshot")
+build_forex_snapshot = _import_engine_builder("atlas.engines.forex_engine", "build_forex_snapshot")
+build_atlas_ia_snapshot = _import_engine_builder("atlas.engines.atlas_ia_engine", "build_atlas_ia_snapshot")
+
+
+def _merge_engine_snapshot(base: Dict[str, Any], snap: Any) -> Dict[str, Any]:
+    if not isinstance(snap, dict):
+        analysis = SnapshotAnalysis(
+            status="ENGINE_ERROR",
+            world=str(base.get("world", "")),
+            symbol=str(base.get("symbol", "")),
+            tf=str(base.get("tf", "")),
+            atlas_mode=base.get("atlas_mode"),
+            provider="mt5",
+            last_error=None,
+            msg="engine returned non-dict snapshot",
+        )
+        rows = [UIScannerRow(symbol=str(base.get("symbol", "")), tf=str(base.get("tf", "")), reason="ENGINE_BAD_SNAPSHOT")]
+        return _finalize(base, analysis, rows)
+
+    a = snap.get("analysis", {}) if isinstance(snap.get("analysis", {}), dict) else {}
+    analysis = SnapshotAnalysis(
+        status=str(a.get("status", "OK")),
+        world=str(a.get("world", base.get("world", ""))),
+        symbol=str(a.get("symbol", base.get("symbol", ""))),
+        tf=str(a.get("tf", base.get("tf", ""))),
+        atlas_mode=a.get("atlas_mode", base.get("atlas_mode")),
+        provider=str(a.get("provider", "mt5")),
+        last_error=_safe_last_error(a.get("last_error")),
+        msg=a.get("msg"),
+    )
+
+    ui = snap.get("ui", {}) if isinstance(snap.get("ui", {}), dict) else {}
+    rows_raw = ui.get("rows", []) or []
+    rows: List[UIScannerRow] = []
+    if isinstance(rows_raw, list):
+        for r in rows_raw:
+            if isinstance(r, dict):
+                rows.append(
+                    UIScannerRow(
+                        symbol=str(r.get("symbol", base.get("symbol", ""))),
+                        tf=str(r.get("tf", base.get("tf", ""))),
+                        score=int(r.get("score", 0) or 0),
+                        state=str(r.get("state", "WAIT")),
+                        entry=r.get("entry"),
+                        sl=r.get("sl"),
+                        tp=r.get("tp"),
+                        lot=r.get("lot"),
+                        reason=r.get("reason"),
+                    )
+                )
+
+    if not rows:
+        rows = [UIScannerRow(symbol=str(base.get("symbol", "")), tf=str(base.get("tf", "")), reason="EMPTY_ROWS")]
+
+    base["analysis"] = asdict(analysis)
+    base["ui"] = {"rows": [asdict(r) for r in rows]}
+    base["ok"] = analysis.status not in ("PROVIDER_ERROR", "ENGINE_ERROR", "INVALID_REQUEST")
+    return base
+
+
 def build_snapshot(
     *,
     world: str,
-    atlas_mode: Optional[str] = None,
     symbol: str,
     tf: str,
-    count: int = 220,
+    count: int = 200,
+    atlas_mode: Optional[str] = None,
+    season: Optional[str] = None,
 ) -> Dict[str, Any]:
-    world_u = (world or "").upper().strip()
-    mode_u = (atlas_mode or "").upper().strip() if atlas_mode else None
-    tf_u = _normalize_tf(tf)
+    w = _normalize_world(world)
+    s = _normalize_symbol(symbol)
+    t = _normalize_tf(tf)
+    c = max(50, min(int(count or 200), 2000))
+    m = _normalize_atlas_mode(atlas_mode)
 
-    candles, meta, err = _get_candles(symbol=symbol, tf=tf_u, count=count)
-    ts = _now_ms()
+    base = _base_snapshot(w, s, t, c, m)
 
-    if err:
-        payload = {
-            "world": world_u,
-            "atlas_mode": mode_u,
-            "symbol": symbol,
-            "tf": tf_u,
-            "ts_ms": ts,
-            "candles": [],
-            "analysis": {"status": "NO_TRADE", "reason": "CANDLES_ERROR", "detail": err},
-            "ui": {"rows": [{"k": "Estado", "v": "WAIT"}, {"k": "Reason", "v": "CANDLES_ERROR"}], "meta": {"note": "candles_error"}},
-        }
-        if process_snapshot_for_bitacora is not None:
-            try:
-                process_snapshot_for_bitacora(payload)
-            except Exception:
-                pass
-        return payload
+    analysis = SnapshotAnalysis(
+        status="OK",
+        world=w,
+        symbol=s,
+        tf=t,
+        atlas_mode=m,
+        provider="mt5",
+        last_error=None,
+        msg=None,
+    )
 
-    st = get_world_state(world=world_u, atlas_mode=mode_u, symbol=symbol, tf=tf_u)
+    if not s:
+        analysis.status = "INVALID_REQUEST"
+        analysis.msg = "symbol is required"
+        return _finalize(base, analysis, [])
 
-    decision: Dict[str, Any]
-    if world_u == "ATLAS_IA":
-        if mode_u in ("SCALPING_M1", "SCALPING_M5"):
-            decision = _engine_scalping(symbol, tf_u, candles, st=st)
-        elif mode_u == "FOREX":
-            decision = _engine_forex(symbol, tf_u, candles, st=st)
-        else:
-            decision = {"phase": PHASE_WAIT, "side": "WAIT", "reason": "INVALID_ATLAS_MODE", "note": "atlas_mode inválido", "plan_hash": "", "entry": 0.0, "sl": 0.0, "tp": 0.0}
-    else:
-        decision = {"phase": PHASE_WAIT, "side": "WAIT", "reason": "NO_ENGINE_FOR_WORLD", "note": "world sin motor", "plan_hash": "", "entry": 0.0, "sl": 0.0, "tp": 0.0}
+    provider = _get_provider()
+    feed = _fetch_market_data(provider, s, t, c)
 
-    phase_internal = decision.get("phase", PHASE_WAIT)
-    state_public = _public_state(phase_internal)
+    if not feed.get("ok", False):
+        analysis.status = "PROVIDER_ERROR"
+        analysis.last_error = _safe_last_error(feed.get("last_error"))
+        analysis.msg = f"provider failed: {feed.get('reason')}"
+        rows = [UIScannerRow(symbol=s, tf=t, score=0, state="WAIT", reason="PROVIDER_ERROR")]
+        return _finalize(base, analysis, rows)
 
-    side = _normalize_side(decision.get("side", "WAIT"))
-    reason = _s(decision.get("reason", ""), "NO_REASON")
-    note = _s(decision.get("note", ""), "")
-    plan_hash = _s(decision.get("plan_hash", ""), "")
+    candles = feed.get("candles", []) or []
 
-    price = _last_close(candles)
-    entry = float(_f(decision.get("entry", 0.0), 0.0))
-    sl = float(_f(decision.get("sl", 0.0), 0.0))
-    tp = float(_f(decision.get("tp", 0.0), 0.0))
+    try:
+        if w == "GAP":
+            if not callable(build_gap_snapshot):
+                analysis.status = "ENGINE_ERROR"
+                analysis.msg = "gap_engine not available"
+                rows = [UIScannerRow(symbol=s, tf=t, reason="ENGINE_MISSING")]
+                return _finalize(base, analysis, rows)
+            snap = build_gap_snapshot(symbol=s, tf=t, count=c, candles=candles, season=season, provider=provider)
+            return _merge_engine_snapshot(base, snap)
 
-    status = "SIGNAL" if state_public == "SIGNAL" and side in ("BUY", "SELL") and entry > 0 and sl > 0 and tp > 0 else "NO_TRADE"
+        if w in ("SCALPING_M1", "SCALPING_M5"):
+            if not callable(build_scalping_snapshot):
+                analysis.status = "ENGINE_ERROR"
+                analysis.msg = "scalping_engine not available"
+                rows = [UIScannerRow(symbol=s, tf=t, reason="ENGINE_MISSING")]
+                return _finalize(base, analysis, rows)
+            snap = build_scalping_snapshot(world=w, symbol=s, tf=t, count=c, candles=candles, provider=provider)
+            return _merge_engine_snapshot(base, snap)
 
-    payload: Dict[str, Any] = {
-        "world": world_u,
-        "atlas_mode": mode_u,
-        "symbol": symbol,
-        "tf": tf_u,
-        "ts_ms": ts,
-        "candles": candles,
-        "meta": meta or {},
-        "price": float(price),
+        if w == "FOREX":
+            if not callable(build_forex_snapshot):
+                analysis.status = "ENGINE_ERROR"
+                analysis.msg = "forex_engine not available"
+                rows = [UIScannerRow(symbol=s, tf=t, reason="ENGINE_MISSING")]
+                return _finalize(base, analysis, rows)
+            snap = build_forex_snapshot(symbol=s, tf=t, count=c, candles=candles, provider=provider)
+            return _merge_engine_snapshot(base, snap)
 
-        "state": state_public,
-        "side": side,
+        if not callable(build_atlas_ia_snapshot):
+            analysis.status = "ENGINE_ERROR"
+            analysis.msg = "atlas_ia_engine not available"
+            rows = [UIScannerRow(symbol=s, tf=t, reason="ENGINE_MISSING")]
+            return _finalize(base, analysis, rows)
 
-        "entry": 0.0,
-        "sl": 0.0,
-        "tp": 0.0,
-        "trade": None,
+        snap = build_atlas_ia_snapshot(symbol=s, tf=t, count=c, candles=candles, atlas_mode=m, provider=provider)
+        return _merge_engine_snapshot(base, snap)
 
-        "analysis": {
-            "world": world_u,
-            "atlas_mode": mode_u,
-            "symbol": symbol,
-            "tf": tf_u,
-            "status": status,
-            "state": state_public,
-            "side": side,
-            "reason": reason,
-            "note": note,
-            "plan_hash": plan_hash,
-            "entry": 0.0,
-            "sl": 0.0,
-            "tp": 0.0,
-        },
-        "ui": {
-            "rows": [
-                {"k": "Estado", "v": state_public},
-                {"k": "Lado", "v": side},
-                {"k": "Precio", "v": float(price)},
-                {"k": "Reason", "v": reason},
-                {"k": "Nota", "v": note},
-                {"k": "PlanHash", "v": plan_hash},
-            ],
-            "meta": {"plan_hash": plan_hash},
-        },
-    }
-
-    if status == "SIGNAL":
-        payload["entry"] = entry
-        payload["sl"] = sl
-        payload["tp"] = tp
-        payload["trade"] = {"side": side, "entry": entry, "sl": sl, "tp": tp}
-        payload["analysis"]["entry"] = entry
-        payload["analysis"]["sl"] = sl
-        payload["analysis"]["tp"] = tp
-
-    if process_snapshot_for_bitacora is not None:
-        try:
-            process_snapshot_for_bitacora(payload)
-        except Exception:
-            pass
-
-    return payload
+    except Exception as e:
+        analysis.status = "ENGINE_ERROR"
+        analysis.msg = f"engine exception: {e}"
+        rows = [UIScannerRow(symbol=s, tf=t, reason="ENGINE_ERROR")]
+        return _finalize(base, analysis, rows)

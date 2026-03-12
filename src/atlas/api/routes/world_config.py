@@ -1,35 +1,34 @@
 from __future__ import annotations
 
 from fastapi import APIRouter
+from typing import Any, Dict, Optional
 
-from atlas.bot.symbol_universe import mt5_symbol
+from atlas.worlds_tf import get_world_tf, WORLDS
+from atlas.fib_opt_store import FibOptStore
 
 router = APIRouter(prefix="/world_config", tags=["world_config"])
 
-# Defaults por mundo (base), luego pasamos a MT5 por mt5_symbol()
-WORLD_DEFAULTS_BASE = {
-    "GENERAL":   {"tf": "M5", "symbol": "EURUSD"},
-    "PRESESION": {"tf": "M5", "symbol": "XAUUSD"},  # default oro
-    "GAP":       {"tf": "M1", "symbol": "XAUUSD"},
-    "GATILLOS":  {"tf": "M3", "symbol": "EURUSD"},
-    "ATLAS_IA":  {"tf": "M5", "symbol": "EURUSD"},
-}
-
-GATILLOS_SYMBOLS_BASE = ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD"]
+FIB = FibOptStore()
 
 
 @router.get("")
-def get_world_config():
-    worlds = {}
-    for k, v in WORLD_DEFAULTS_BASE.items():
-        worlds[k] = {
-            "tf": v["tf"],
-            "symbol_base": v["symbol"],
-            "symbol": mt5_symbol(v["symbol"]),
-        }
+def get_config(
+    world: str = "ATLAS_IA",
+    atlas_mode: Optional[str] = None,
+    symbol: Optional[str] = None,
+) -> Dict[str, Any]:
+    resolved = get_world_tf(world, atlas_mode=atlas_mode, symbol=symbol)
+    fib = FIB.get(symbol or "") if symbol else None
 
     return {
-        "worlds": worlds,
-        "gatillos_symbols_base": list(GATILLOS_SYMBOLS_BASE),
-        "gatillos_symbols": [mt5_symbol(s) for s in GATILLOS_SYMBOLS_BASE],
+        "ok": True,
+        "request": {"world": world, "atlas_mode": atlas_mode, "symbol": symbol},
+        "worlds": {k: {"analysis_tfs": v.analysis_tfs, "trigger_tfs": v.trigger_tfs, "note": v.note} for k, v in WORLDS.items()},
+        "resolved": {"world": resolved.world, "analysis_tfs": resolved.analysis_tfs, "trigger_tfs": resolved.trigger_tfs, "note": resolved.note},
+        "fib_opt": fib.to_dict() if fib else None,
     }
+
+
+@router.get("/fib_opt/all")
+def fib_opt_all() -> Dict[str, Any]:
+    return {"ok": True, "items": FIB.all()}
