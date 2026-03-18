@@ -14,6 +14,13 @@ STATE_PRIORITY = {
 }
 
 
+def _safe_float(v: Any, default: float = 0.0) -> float:
+    try:
+        return float(v)
+    except Exception:
+        return default
+
+
 def _normalize_state(state: Any) -> str:
     s = str(state or "").upper().strip()
 
@@ -43,21 +50,179 @@ def _normalize_state(state: Any) -> str:
 def _sort_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     def key_fn(row: Dict[str, Any]):
         state = _normalize_state(row.get("state"))
-        score = float(row.get("score") or 0)
+        score = _safe_float(row.get("score"), 0.0)
         return (STATE_PRIORITY.get(state, 0), score)
 
     return sorted(rows, key=key_fn, reverse=True)
 
 
-def _relax_row_for_mode(row: Dict[str, Any], atlas_mode: str) -> Dict[str, Any]:
-    """
-    Relaja un poco la lógica visual del scanner sin tocar el motor interno.
-    Esto sirve para que M5 y FOREX no aparezcan muertos cuando sí hay contexto.
-    """
+def _candles_of(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    candles = payload.get("candles", [])
+    return candles if isinstance(candles, list) else []
+
+
+def _body_ratio(candle: Dict[str, Any]) -> float:
+    o = _safe_float(candle.get("o", candle.get("open")))
+    h = _safe_float(candle.get("h", candle.get("high")))
+    l = _safe_float(candle.get("l", candle.get("low")))
+    c = _safe_float(candle.get("c", candle.get("close")))
+
+    total = h - l
+    body = abs(c - o)
+
+    if total <= 0:
+        return 0.0
+
+    return body / total
+
+
+def _range_strength(candles: List[Dict[str, Any]]) -> float:
+    if len(candles) < 20:
+        return 0.0
+
+    recent = candles[-20:]
+    highs = [_safe_float(c.get("h", c.get("high"))) for c in recent]
+    lows = [_safe_float(c.get("l", c.get("low"))) for c in recent]
+
+    highs = [x for x in highs if x > 0]
+    lows = [x for x in lows if x > 0]
+
+    if not highs or not lows:
+        return 0.0
+
+    hi = max(highs)
+    lo = min(lows)
+    if hi <= lo:
+        return 0.0
+
+    mid = (hi + lo) / 2.0
+    if mid <= 0:
+        return 0.0
+
+    return (hi - lo) / mid
+
+
+def _recent_body_confirmation(candles: List[Dict[str, Any]]) -> float:
+    if len(candles) < 3:
+        return 0.0
+
+    last3 = candles[-3:]
+    ratios = [_body_ratio(c) for c in last3]
+    return sum(ratios) / len(ratios)
+
+
+def _recent_displacement(candles: List[Dict[str, Any]]) -> float:
+    if len(candles) < 6:
+        return 0.0
+
+    recent = candles[-6:]
+    first_open = _safe_float(recent[0].get("o", recent[0].get("open")))
+    last_close = _safe_float(recent[-1].get("c", recent[-1].get("close")))
+
+    highs = [_safe_float(c.get("h", c.get("high"))) for c in recent]
+    lows = [_safe_float(c.get("l", c.get("low"))) for c in recent]
+
+    highs = [x for x in highs if x > 0]
+    lows = [x for x in lows if x > 0]
+
+    if not highs or not lows:
+        return 0.0
+
+    total_range = max(highs) - min(lows)
+    if total_range <= 0:
+        return 0.0
+
+    move = abs(last_close - first_open)
+    return move / total_range
+
+
+def _is_dead_market_m1(candles: List[Dict[str, Any]]) -> bool:
+    strength = _range_strength(candles)
+    body_conf = _recent_body_confirmation(candles)
+    disp = _recent_displacement(candles)
+
+    if strength < 0.00035 and body_conf < 0.22 and disp < 0.28:
+        return True
+
+    return False
+
+
+def _m1_quality_bonus(clean: Dict[str, Any], candles: List[Dict[str, Any]]) -> Dict[str, Any]:
+    row = dict(clean)
+
+    score = _safe_float(row.get("score"), 0.0)
+    rr = _safe_float(row.get("rr"), 0.0)
+    state = _normalize_state(row.get("state"))
+    note = str(row.get("note") or "")
+
+    strength = _range_strength(candles)
+    body_conf = _recent_body_confirmation(candles)
+    disp = _recent_displacement(candles)
+    sweep_valid = bool(row.get("sweep_valid"))
+    sweep_strength = _safe_float(row.get("sweep_strength"), 0.0)
+
+    bonus = 0.0
+    penalty = 0.0
+
+    if sweep_valid:
+        bonus += 0.5
+    else:
+        penalty += 0.75
+
+    if sweep_strength >= 1.0:
+        bonus += 0.5
+    elif sweep_strength > 0 and sweep_strength < 0.45:
+        penalty += 1.0
+        note = f"{note} | weak_sweep".strip(" |")
+
+    if rr >= 1.5:
+        bonus += 0.5
+    elif rr > 0 and rr < 1.15:
+        penalty += 0.75
+
+    if body_conf >= 0.45:
+        bonus += 0.5
+    elif body_conf < 0.18:
+        penalty += 1.0
+        note = f"{note} | weak_body".strip(" |")
+
+    if disp >= 0.55:
+        bonus += 0.75
+    elif disp < 0.22:
+        penalty += 1.25
+        note = f"{note} | weak_displacement".strip(" |")
+
+    if strength < 0.00025:
+        penalty += 1.5
+        note = f"{note} | low_range_m1".strip(" |")
+    elif strength < 0.00035:
+        penalty += 0.75
+
+    new_score = max(0.0, score + bonus - penalty)
+    row["score"] = round(new_score, 2)
+
+    if state in {"SET_UP", "ENTRY"} and _is_dead_market_m1(candles):
+        row["state"] = "SIN_SETUP"
+        row["note"] = f"{note} | filtro_m1_dead_market".strip(" |")
+        return row
+
+    has_plan = row.get("entry") is not None and row.get("sl") is not None and row.get("tp") is not None
+    if state == "SIN_SETUP" and has_plan and new_score >= 9.0 and not _is_dead_market_m1(candles):
+        row["state"] = "SET_UP"
+        if row.get("side") is None:
+            action = row.get("action")
+            row["side"] = action if action in {"BUY", "SELL"} else None
+
+    row["note"] = note
+    return row
+
+
+def _relax_row_for_mode(row: Dict[str, Any], atlas_mode: str, candles: List[Dict[str, Any]]) -> Dict[str, Any]:
     clean = dict(row)
     state = _normalize_state(clean.get("state"))
-    score = float(clean.get("score") or 0)
-    rr = float(clean.get("rr") or 0)
+    score = _safe_float(clean.get("score"), 0.0)
+    rr = _safe_float(clean.get("rr"), 0.0)
+    sweep_valid = bool(clean.get("sweep_valid"))
     side = clean.get("side")
     entry = clean.get("entry")
     sl = clean.get("sl")
@@ -67,25 +232,28 @@ def _relax_row_for_mode(row: Dict[str, Any], atlas_mode: str) -> Dict[str, Any]:
     mode = str(atlas_mode or "").upper().strip()
 
     if mode == "SCALPING_M1":
-        # M1 más suelto: score 8 mantiene setup claro
-        if state == "SIN_SETUP" and has_plan and score >= 8:
+        clean = _m1_quality_bonus(clean, candles)
+        state = _normalize_state(clean.get("state"))
+        score = _safe_float(clean.get("score"), 0.0)
+
+        if state == "SIN_SETUP" and has_plan and score >= 9.0 and not _is_dead_market_m1(candles):
             clean["state"] = "SET_UP"
             if side is None:
-                clean["side"] = clean.get("action") if clean.get("action") in {"BUY", "SELL"} else None
+                action = clean.get("action")
+                clean["side"] = action if action in {"BUY", "SELL"} else None
 
     elif mode == "SCALPING_M5":
-        # M5 necesita respirar: si hay plan y score 7+ lo mostramos
-        if state == "SIN_SETUP" and has_plan and score >= 7:
+        if state == "SIN_SETUP" and has_plan and score >= 8 and sweep_valid:
             clean["state"] = "SET_UP"
             if side is None:
-                clean["side"] = clean.get("action") if clean.get("action") in {"BUY", "SELL"} else None
+                action = clean.get("action")
+                clean["side"] = action if action in {"BUY", "SELL"} else None
 
     elif mode == "FOREX":
-        # Forex: si hay estructura razonable, mostrar SET_UP aunque no llegue a ENTRY
-        if state == "SIN_SETUP" and has_plan and (score >= 6 or rr >= 1.2):
+        if state == "SIN_SETUP" and has_plan and score >= 8 and rr >= 1.3 and sweep_valid:
             clean["state"] = "SET_UP"
-            if score < 7:
-                clean["score"] = 7
+            if score < 8:
+                clean["score"] = 8
 
     return clean
 
@@ -140,7 +308,7 @@ def scan_opportunities(
 
     for symbol, payload in candles_by_symbol.items():
         try:
-            candles = payload.get("candles", [])
+            candles = _candles_of(payload)
             analysis, raw_rows = _run_mode_for_symbol(mode, symbol, candles)
 
             if isinstance(analysis, dict):
@@ -158,7 +326,7 @@ def scan_opportunities(
                 clean_row = dict(row)
                 clean_row["symbol"] = clean_row.get("symbol") or symbol
                 clean_row["state"] = _normalize_state(clean_row.get("state"))
-                clean_row["score"] = float(clean_row.get("score") or 0)
+                clean_row["score"] = _safe_float(clean_row.get("score"), 0.0)
 
                 if "tf" not in clean_row or not clean_row.get("tf"):
                     if mode == "SCALPING_M1":
@@ -168,7 +336,7 @@ def scan_opportunities(
                     else:
                         clean_row["tf"] = "H1"
 
-                clean_row = _relax_row_for_mode(clean_row, mode)
+                clean_row = _relax_row_for_mode(clean_row, mode, candles)
                 rows.append(clean_row)
 
         except Exception as e:
@@ -186,6 +354,7 @@ def scan_opportunities(
                 "risk_percent": 0.0,
                 "rr": 0.0,
                 "sweep_valid": False,
+                "sweep_strength": 0.0,
                 "note": f"scanner_error: {repr(e)}",
             })
 

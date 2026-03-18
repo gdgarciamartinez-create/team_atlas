@@ -133,31 +133,20 @@ function isRenderableLevel(price, data) {
   return p >= lowerBound && p <= upperBound;
 }
 
-function resolveStartTime(activeRow, data) {
-  const explicit =
-    toUnixSec(activeRow?.entry_candle_time) ??
-    toUnixSec(activeRow?.entry_time) ??
+function resolveStartTime(activeRow) {
+  return (
     toUnixSec(activeRow?.entry_ts) ??
-    null;
-
-  if (explicit != null) return explicit;
-
-  if (!Array.isArray(data) || !data.length) return null;
-
-  const last = data[data.length - 1];
-  return last?.time ?? null;
+    toUnixSec(activeRow?.entry_time) ??
+    toUnixSec(activeRow?.entry_candle_time) ??
+    toUnixSec(activeRow?.signal_candle_time) ??
+    toUnixSec(activeRow?.updated_at) ??
+    null
+  );
 }
 
-function getActualStartTime(data, startTime) {
-  if (!Array.isArray(data) || !data.length || startTime == null) return null;
-
-  const exactBar = data.find((c) => c.time === startTime);
-  if (exactBar?.time != null) return exactBar.time;
-
-  const nextBar = data.find((c) => c.time >= startTime);
-  if (nextBar?.time != null) return nextBar.time;
-
-  return data[data.length - 1]?.time ?? data[0]?.time ?? null;
+function isFinitePrice(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0;
 }
 
 function buildHorizontalSeries(data, price, startTime) {
@@ -167,13 +156,16 @@ function buildHorizontalSeries(data, price, startTime) {
   if (!Number.isFinite(p) || p <= 0) return [];
   if (startTime == null) return [];
 
-  const endTime = data[data.length - 1]?.time;
-  const firstVisibleTime = getActualStartTime(data, startTime);
+  const lastCandleTime = data[data.length - 1]?.time ?? null;
+  const endTime =
+    lastCandleTime != null
+      ? Math.max(lastCandleTime, startTime + 1)
+      : startTime + 1;
 
-  if (endTime == null || firstVisibleTime == null) return [];
+  if (endTime == null) return [];
 
   return [
-    { time: firstVisibleTime, value: p },
+    { time: startTime, value: p },
     { time: endTime, value: p },
   ];
 }
@@ -185,20 +177,56 @@ function buildBaselineZoneSeries(data, level, startTime) {
   if (!Number.isFinite(lvl) || lvl <= 0) return [];
   if (startTime == null) return [];
 
-  const endTime = data[data.length - 1]?.time;
-  const firstVisibleTime = getActualStartTime(data, startTime);
+  const lastCandleTime = data[data.length - 1]?.time ?? null;
+  const endTime =
+    lastCandleTime != null
+      ? Math.max(lastCandleTime, startTime + 1)
+      : startTime + 1;
 
-  if (endTime == null || firstVisibleTime == null) return [];
+  if (endTime == null) return [];
 
   return [
-    { time: firstVisibleTime, value: lvl },
+    { time: startTime, value: lvl },
     { time: endTime, value: lvl },
   ];
 }
 
-function buildVisibleTradeLines(activeRow, data) {
-  const state = normalizeStateKey(activeRow?.state);
-  const showTradeLines = ["ENTRY", "IN_TRADE", "TP1", "TP2", "RUN"].includes(state);
+function isOperativeState(state) {
+  return ["ENTRY", "IN_TRADE", "TP1", "TP2", "RUN"].includes(
+    normalizeStateKey(state)
+  );
+}
+
+function hasExactTradePayload(row) {
+  if (!row) return false;
+
+  const side = String(row?.side || "").toUpperCase().trim();
+  const entry = Number(row?.entry);
+  const sl = Number(row?.sl);
+  const tp = Number(row?.tp2 ?? row?.tp ?? row?.parcial ?? row?.tp1 ?? row?.tp1_price);
+
+  if (!["SET_UP", "ENTRY", "IN_TRADE", "TP1", "TP2", "RUN"].includes(normalizeStateKey(row?.state))) return false;
+  if (!["BUY", "SELL"].includes(side)) return false;
+  if (!isFinitePrice(entry) || !isFinitePrice(sl) || !isFinitePrice(tp)) return false;
+
+  if (side === "BUY") return tp > entry;
+  return tp < entry;
+}
+
+function resolveChartTradeRow(snapshot, activeRow) {
+  const snapshotRows = Array.isArray(snapshot?.ui?.rows) ? snapshot.ui.rows : [];
+  const snapshotSymbol = snapshot?.symbol;
+  const snapshotRow =
+    snapshotRows.find((r) => r?.symbol === snapshotSymbol) || snapshotRows[0] || null;
+
+  if (hasExactTradePayload(snapshotRow)) return snapshotRow;
+  if (hasExactTradePayload(activeRow)) return activeRow;
+  return null;
+}
+
+function buildVisibleTradeLines(tradeRow, data) {
+  const state = normalizeStateKey(tradeRow?.state);
+  const showTradeLines = ["SET_UP", "ENTRY", "IN_TRADE", "TP1", "TP2", "RUN"].includes(state);
 
   if (!showTradeLines || !Array.isArray(data) || data.length < 2) {
     return {
@@ -216,25 +244,23 @@ function buildVisibleTradeLines(activeRow, data) {
     };
   }
 
-  const startTime = resolveStartTime(activeRow, data);
-  const actualStartTime = getActualStartTime(data, startTime);
+  const startTime = resolveStartTime(tradeRow) ?? data[0]?.time ?? null;
 
-  const entry = Number(activeRow?.entry);
-  const sl = Number(activeRow?.sl);
-
-  const tp1 = Number(activeRow?.tp1);
-  const tp2 = Number(activeRow?.tp2);
-  const tp = Number.isFinite(tp2)
-    ? tp2
-    : Number.isFinite(Number(activeRow?.tp))
-      ? Number(activeRow?.tp)
-      : tp1;
+  const entry = Number(tradeRow?.entry);
+  const sl = Number(tradeRow?.sl);
+  const tp = Number(tradeRow?.tp2 ?? tradeRow?.tp ?? tradeRow?.parcial ?? tradeRow?.tp1 ?? tradeRow?.tp1_price);
+  const side = String(tradeRow?.side || "").toUpperCase().trim();
 
   const entryOk = isRenderableLevel(entry, data);
   const slOk = isRenderableLevel(sl, data);
   const tpOk = isRenderableLevel(tp, data);
 
-  if (!entryOk || !slOk || !tpOk || actualStartTime == null) {
+  const geometryOk =
+    side === "BUY" ? tp > entry :
+    side === "SELL" ? tp < entry :
+    false;
+
+  if (!entryOk || !slOk || !tpOk || startTime == null || !geometryOk) {
     return {
       entry: null,
       sl: null,
@@ -250,9 +276,9 @@ function buildVisibleTradeLines(activeRow, data) {
     };
   }
 
-  const entryData = buildHorizontalSeries(data, entry, actualStartTime);
-  const slData = buildHorizontalSeries(data, sl, actualStartTime);
-  const tpData = buildHorizontalSeries(data, tp, actualStartTime);
+  const entryData = buildHorizontalSeries(data, entry, startTime);
+  const slData = buildHorizontalSeries(data, sl, startTime);
+  const tpData = buildHorizontalSeries(data, tp, startTime);
 
   const profitAboveData = [];
   const profitBelowData = [];
@@ -260,21 +286,23 @@ function buildVisibleTradeLines(activeRow, data) {
   const lossBelowData = [];
 
   if (tp > entry) {
-    profitAboveData.push(...buildBaselineZoneSeries(data, tp, actualStartTime));
+    profitAboveData.push(...buildBaselineZoneSeries(data, tp, startTime));
   } else if (tp < entry) {
-    profitBelowData.push(...buildBaselineZoneSeries(data, tp, actualStartTime));
+    profitBelowData.push(...buildBaselineZoneSeries(data, tp, startTime));
   }
 
   if (sl > entry) {
-    lossAboveData.push(...buildBaselineZoneSeries(data, sl, actualStartTime));
+    lossAboveData.push(...buildBaselineZoneSeries(data, sl, startTime));
   } else if (sl < entry) {
-    lossBelowData.push(...buildBaselineZoneSeries(data, sl, actualStartTime));
+    lossBelowData.push(...buildBaselineZoneSeries(data, sl, startTime));
   }
 
   return {
     entry,
     sl,
     tp,
+    side,
+    startTime,
     entryData,
     slData,
     tpData,
@@ -290,6 +318,8 @@ function stableTradeSignature(trade) {
   try {
     return JSON.stringify({
       valid: trade.hasValidTrade,
+      side: trade.side,
+      startTime: trade.startTime,
       entry: trade.entryData,
       sl: trade.slData,
       tp: trade.tpData,
@@ -324,6 +354,13 @@ function clearTradeSeries({
   } catch {}
 }
 
+function candlesSignatureOf(data) {
+  if (!Array.isArray(data) || !data.length) return "[]";
+  const first = data[0];
+  const last = data[data.length - 1];
+  return `${data.length}|${first.time}|${first.open}|${first.high}|${first.low}|${first.close}|${last.time}|${last.open}|${last.high}|${last.low}|${last.close}`;
+}
+
 export default function Charts({ snapshot, activeRow, accent = "#ff2fb3" }) {
   const containerRef = useRef(null);
 
@@ -343,45 +380,42 @@ export default function Charts({ snapshot, activeRow, accent = "#ff2fb3" }) {
   const lastCandlesSignatureRef = useRef("");
   const lastTradeSignatureRef = useRef("");
   const lastGoodCandlesRef = useRef([]);
+  const resizeRafRef = useRef(null);
 
-  const symbolKey = activeRow?.symbol || snapshot?.symbol || "UNKNOWN";
-  const tfKey = activeRow?.tf || snapshot?.tf || "UNKNOWN";
+  const symbolKey = snapshot?.symbol || activeRow?.symbol || "UNKNOWN";
+  const tfKey = snapshot?.tf || activeRow?.tf || "UNKNOWN";
   const chartKey = `${symbolKey}__${tfKey}`;
   const digits = decimalsBySymbol(symbolKey);
   const minMove = minMoveByDigits(digits);
 
   const incomingData = useMemo(() => {
     const source = snapshot?.candles || [];
-    return normalizeCandles(source).slice(-220);
+    return normalizeCandles(source).slice(-120);
   }, [snapshot?.candles, snapshot?.symbol, snapshot?.tf]);
 
   const data = useMemo(() => {
-    if (incomingData.length >= 2) {
-      return incomingData;
-    }
+    if (incomingData.length >= 2) return incomingData;
     return lastGoodCandlesRef.current || [];
   }, [incomingData]);
 
-  const candlesSignature = useMemo(() => {
-    if (!data.length) return "[]";
-    const first = data[0];
-    const last = data[data.length - 1];
-    return `${data.length}|${first.time}|${first.open}|${first.high}|${first.low}|${first.close}|${last.time}|${last.open}|${last.high}|${last.low}|${last.close}`;
-  }, [data]);
+  const candlesSignature = useMemo(() => candlesSignatureOf(data), [data]);
+
+  const chartTradeRow = useMemo(() => {
+    return resolveChartTradeRow(snapshot, activeRow);
+  }, [snapshot, activeRow]);
 
   const tradeLines = useMemo(() => {
-    return buildVisibleTradeLines(activeRow, data);
+    return buildVisibleTradeLines(chartTradeRow, data);
   }, [
-    activeRow?.state,
-    activeRow?.side,
-    activeRow?.entry,
-    activeRow?.sl,
-    activeRow?.tp,
-    activeRow?.tp1,
-    activeRow?.tp2,
-    activeRow?.entry_candle_time,
-    activeRow?.entry_time,
-    activeRow?.entry_ts,
+    chartTradeRow?.state,
+    chartTradeRow?.side,
+    chartTradeRow?.entry,
+    chartTradeRow?.sl,
+    chartTradeRow?.tp,
+    chartTradeRow?.tp2,
+    chartTradeRow?.entry_candle_time,
+    chartTradeRow?.entry_time,
+    chartTradeRow?.entry_ts,
     data,
   ]);
 
@@ -398,6 +432,11 @@ export default function Charts({ snapshot, activeRow, accent = "#ff2fb3" }) {
     try {
       resizeObserverRef.current?.disconnect();
     } catch {}
+
+    if (resizeRafRef.current) {
+      cancelAnimationFrame(resizeRafRef.current);
+      resizeRafRef.current = null;
+    }
 
     try {
       chartRef.current?.remove();
@@ -607,12 +646,15 @@ export default function Charts({ snapshot, activeRow, accent = "#ff2fb3" }) {
         const width = containerRef.current.clientWidth || 0;
         if (width < 50) return;
 
-        try {
-          chartRef.current.applyOptions({
-            width,
-            height: 520,
-          });
-        } catch {}
+        if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
+        resizeRafRef.current = requestAnimationFrame(() => {
+          try {
+            chartRef.current?.applyOptions({
+              width,
+              height: 520,
+            });
+          } catch {}
+        });
       };
 
       const resizeObserver = new ResizeObserver(onResize);
@@ -626,6 +668,11 @@ export default function Charts({ snapshot, activeRow, accent = "#ff2fb3" }) {
       try {
         resizeObserverRef.current?.disconnect();
       } catch {}
+
+      if (resizeRafRef.current) {
+        cancelAnimationFrame(resizeRafRef.current);
+        resizeRafRef.current = null;
+      }
 
       try {
         chartRef.current?.remove();
@@ -680,10 +727,14 @@ export default function Charts({ snapshot, activeRow, accent = "#ff2fb3" }) {
 
     const safeData = data && data.length >= 2 ? data : lastGoodCandlesRef.current;
 
-    if (!safeData || safeData.length < 2) return;
-    if (lastCandlesSignatureRef.current === candlesSignature) return;
+    if (!safeData || safeData.length < 2) {
+      return;
+    }
 
-    lastCandlesSignatureRef.current = candlesSignature;
+    const safeSignature = candlesSignatureOf(safeData);
+    if (lastCandlesSignatureRef.current === safeSignature && hasFittedRef.current) return;
+
+    lastCandlesSignatureRef.current = safeSignature;
 
     try {
       candleSeriesRef.current.setData(safeData);

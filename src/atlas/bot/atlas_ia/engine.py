@@ -31,6 +31,7 @@ def _normalize_candles(md: Dict[str, Any]) -> List[Dict[str, float]]:
             continue
 
         row: Dict[str, float] = {"o": o, "h": h, "l": l, "c": cl}
+
         t = c.get("time", c.get("t"))
         if t is not None:
             row["t"] = t
@@ -99,6 +100,7 @@ def _normalize_engine_rows(rows: List[Dict[str, Any]], symbol: str, tf: str) -> 
             parcial = row.get("partial")
         if parcial is None:
             parcial = row.get("tp1")
+
         if parcial is None and entry is not None and tp is not None:
             try:
                 parcial = (float(entry) + float(tp)) / 2.0
@@ -120,16 +122,6 @@ def _normalize_engine_rows(rows: List[Dict[str, Any]], symbol: str, tf: str) -> 
             "rr": row.get("rr"),
             "note": row.get("text") or row.get("note"),
             "candles": row.get("candles"),
-            "signal_ts": row.get("signal_ts"),
-            "signal_candle_time": row.get("signal_candle_time"),
-            "entry_ts": row.get("entry_ts"),
-            "entry_candle_time": row.get("entry_candle_time"),
-            "tp1_ts": row.get("tp1_ts"),
-            "tp2_ts": row.get("tp2_ts"),
-            "run_ts": row.get("run_ts"),
-            "closed_ts": row.get("closed_ts"),
-            "close_reason": row.get("close_reason"),
-            "close_price": row.get("close_price"),
             "zone_low": row.get("zone_low"),
             "zone_high": row.get("zone_high"),
             "sweep_valid": row.get("sweep_valid"),
@@ -146,8 +138,9 @@ def _run_scalping_m1(symbol: str, tf: str, md: Dict[str, Any]) -> Tuple[Dict[str
         world="ATLAS_IA",
         tf=tf,
         symbols=[symbol],
-        candles_by_symbol={symbol: {"candles": _normalize_candles(md)}},
+        candles_by_symbol={symbol: {"candles": md.get("candles", [])}},
     )
+
     return analysis, _normalize_engine_rows(rows, symbol, tf)
 
 
@@ -158,8 +151,9 @@ def _run_scalping_m5(symbol: str, tf: str, md: Dict[str, Any]) -> Tuple[Dict[str
         world="ATLAS_IA",
         tf=tf,
         symbols=[symbol],
-        candles_by_symbol={symbol: {"candles": _normalize_candles(md)}},
+        candles_by_symbol={symbol: {"candles": md.get("candles", [])}},
     )
+
     return analysis, _normalize_engine_rows(rows, symbol, tf)
 
 
@@ -190,13 +184,13 @@ def eval_atlas_ia(md: Dict[str, Any], raw_query: Dict[str, Any] | None = None):
     else:
         tf = "H1"
 
-    candles = _normalize_candles(md)
+    candles = md.get("candles", [])
+
     if len(candles) == 0:
         analysis = {
             "world": "ATLAS_IA",
             "atlas_mode": atlas_mode,
             "status": "NO_DATA",
-            "reason": "No candles in payload",
         }
         ui = {"rows": [_build_wait_row(symbol, tf, 0, "Sin velas")]}
         return analysis, ui
@@ -205,16 +199,8 @@ def eval_atlas_ia(md: Dict[str, Any], raw_query: Dict[str, Any] | None = None):
         analysis, rows = _run_scalping_m1(symbol, tf, md)
     elif atlas_mode == "SCALPING_M5":
         analysis, rows = _run_scalping_m5(symbol, tf, md)
-    elif atlas_mode == "FOREX":
-        analysis, rows = _run_forex(symbol, tf, md)
     else:
-        analysis = {
-            "world": "ATLAS_IA",
-            "atlas_mode": atlas_mode,
-            "status": "UNKNOWN_MODE",
-            "reason": f"Unknown atlas_mode: {atlas_mode}",
-        }
-        rows = [_build_wait_row(symbol, tf, 0, "Modo desconocido")]
+        analysis, rows = _run_forex(symbol, tf, md)
 
     analysis = {
         "world": "ATLAS_IA",
@@ -223,4 +209,5 @@ def eval_atlas_ia(md: Dict[str, Any], raw_query: Dict[str, Any] | None = None):
     }
 
     ui = {"rows": rows}
+
     return analysis, ui

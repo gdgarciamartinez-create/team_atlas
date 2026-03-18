@@ -7,6 +7,7 @@ from atlas.api.routes.scan import router as scan_router
 from atlas.api.routes.bitacora import router as bitacora_router
 from atlas.api.routes.stats import router as stats_router
 from atlas.api.routes.audit_stats import router as audit_stats_router
+from atlas.api.routes.lab_stats import router as lab_stats_router
 
 router = APIRouter()
 
@@ -17,6 +18,7 @@ router.include_router(scan_router)
 router.include_router(bitacora_router)
 router.include_router(stats_router)
 router.include_router(audit_stats_router)
+router.include_router(lab_stats_router)
 
 
 @router.get("/ping-routes")

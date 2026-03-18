@@ -8,17 +8,17 @@ from atlas.bot.analysis.scoring import calc_score
 
 
 def _last_impulse(candles: List[Dict[str, Any]]):
-    if len(candles) < 36:
+    if len(candles) < 24:
         return None
 
-    window = candles[-36:]
+    window = candles[-24:]
     high = max(c["h"] for c in window)
     low = min(c["l"] for c in window)
 
     if high == low:
         return None
 
-    direction = "BUY" if candles[-1]["c"] > candles[-18]["c"] else "SELL"
+    direction = "BUY" if candles[-1]["c"] > candles[-12]["c"] else "SELL"
 
     return {
         "high": high,
@@ -69,10 +69,26 @@ def _build_wait_row(symbol: str, tf: str, note: str) -> Dict[str, Any]:
         "rr": 0.0,
         "sweep_valid": False,
         "sweep_strength": 0.0,
-        "note": note,
         "zone_low": None,
         "zone_high": None,
+        "note": note,
     }
+
+
+def _resolve_state(score: int, inside_zone: bool, near_zone: bool, sweep_valid: bool) -> str:
+    # ENTRY serio pero no mudo
+    if inside_zone and score >= 8:
+        return "ENTRY"
+
+    # SET_UP dentro de zona
+    if inside_zone and score >= 7:
+        return "SET_UP"
+
+    # SET_UP cerca de zona
+    if near_zone and score >= 5:
+        return "SET_UP"
+
+    return "SIN_SETUP"
 
 
 def run_world_rows(
@@ -81,20 +97,15 @@ def run_world_rows(
     symbols: List[str],
     candles_by_symbol: Dict[str, Any],
 ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+
     symbol = symbols[0]
     payload = candles_by_symbol[symbol]
     candles = payload["candles"]
 
-    if not isinstance(candles, list) or len(candles) < 36:
+    if not isinstance(candles, list) or len(candles) < 24:
         row = _build_wait_row(symbol, tf, "Sin impulso")
         return (
-            {
-                "world": world,
-                "action": "WAIT",
-                "signals": 0,
-                "reason": "Sin impulso",
-                "score": 0,
-            },
+            {"world": world, "action": "WAIT", "signals": 0, "reason": "Sin impulso", "score": 0},
             [row],
         )
 
@@ -102,13 +113,7 @@ def run_world_rows(
     if not impulse:
         row = _build_wait_row(symbol, tf, "Sin impulso")
         return (
-            {
-                "world": world,
-                "action": "WAIT",
-                "signals": 0,
-                "reason": "Sin impulso",
-                "score": 0,
-            },
+            {"world": world, "action": "WAIT", "signals": 0, "reason": "Sin impulso", "score": 0},
             [row],
         )
 
@@ -117,41 +122,46 @@ def run_world_rows(
     direction = impulse["dir"]
     impulse_range = float(impulse["range"])
 
-    if impulse_range <= 0:
-        row = _build_wait_row(symbol, tf, "Rango inválido")
-        return (
-            {
-                "world": world,
-                "action": "WAIT",
-                "signals": 0,
-                "reason": "Rango inválido",
-                "score": 0,
-            },
-            [row],
-        )
+    # M5 v2: zona un poco más amplia, pero no exagerada
+    zone_buffer = impulse_range * 0.20
 
-    zone_buffer = impulse_range * 0.08
     inside_zone = z_low <= last_price <= z_high
     near_zone = (z_low - zone_buffer) <= last_price <= (z_high + zone_buffer)
 
-    sweep = detect_sweep(candles, side=direction, lookback=14)
+    # Más memoria para M5
+    sweep = detect_sweep(candles, side=direction, lookback=16)
 
     sl = float(impulse["low"]) if direction == "BUY" else float(impulse["high"])
-    tp = (
-        last_price + (impulse_range * 2.2)
-        if direction == "BUY"
-        else last_price - (impulse_range * 2.2)
-    )
-    parcial = last_price + (tp - last_price) * 0.40
+    tp = float(impulse["high"]) if direction == "BUY" else float(impulse["low"])
+    parcial = last_price + (tp - last_price) * 0.5
 
     rr = _rr(last_price, sl, tp)
 
     timing_ok = inside_zone or near_zone
     context_ok = True
-    late_entry = not near_zone
+    late_entry = not (inside_zone or near_zone)
     structure_dirty = False
     spread_bad = False
+
+    # Bonus moderado
     confluence_bonus = 2 if inside_zone else (1 if near_zone else 0)
+
+    # Filtro leve de reacción:
+    # no tan duro como M1, pero evita velas totalmente muertas
+    body = abs(float(candles[-1]["c"]) - float(candles[-1]["o"]))
+    range_candle = float(candles[-1]["h"]) - float(candles[-1]["l"])
+    body_ratio = body / range_candle if range_candle > 0 else 0.0
+
+    impulse_move = abs(float(candles[-1]["c"]) - float(candles[-2]["c"]))
+    weak_body = body_ratio < 0.25
+    weak_move = impulse_move < (impulse_range * 0.02)
+
+    if inside_zone and weak_body and weak_move:
+        row = _build_wait_row(symbol, tf, "Zona sin decisión")
+        return (
+            {"world": world, "action": "WAIT", "signals": 0, "reason": "Zona sin decisión", "score": 0},
+            [row],
+        )
 
     score_pack = calc_score(
         side=direction,
@@ -169,17 +179,18 @@ def run_world_rows(
     )
 
     score = int(score_pack["score"])
-    state = score_pack["state"]
+    state = _resolve_state(score, inside_zone, near_zone, bool(sweep["valid"]))
 
-    if not near_zone and not sweep["valid"]:
-        score = min(score, 8)
-        state = "SIN_SETUP"
+    # Fallback suave para que M5 no quede mudo
+    if state == "SIN_SETUP" and near_zone and score >= 4:
+        state = "SET_UP"
+        score = max(score, 5)
 
     lots, risk_percent = calc_lots_from_score(
         symbol=symbol,
         entry=last_price,
         sl=sl,
-        score=score,
+        score=score if state == "ENTRY" else 0,
     )
 
     row = {
@@ -187,15 +198,15 @@ def run_world_rows(
         "tf": tf,
         "score": score,
         "state": state,
-        "text": f"{direction} scalping extendido" if state != "SIN_SETUP" else "SIN_SETUP",
+        "text": f"{direction} zona fib" if state != "SIN_SETUP" else "SIN_SETUP",
         "action": direction if state in {"SET_UP", "ENTRY"} else "WAIT",
         "side": direction if state in {"SET_UP", "ENTRY"} else None,
         "entry": last_price if state in {"SET_UP", "ENTRY"} else None,
         "sl": sl if state in {"SET_UP", "ENTRY"} else None,
         "tp": tp if state in {"SET_UP", "ENTRY"} else None,
         "parcial": parcial if state in {"SET_UP", "ENTRY"} else None,
-        "lot": lots if state in {"SET_UP", "ENTRY"} and lots > 0 else None,
-        "risk_percent": risk_percent,
+        "lot": lots if state == "ENTRY" and lots > 0 else None,
+        "risk_percent": risk_percent if state == "ENTRY" else 0.0,
         "rr": rr,
         "zone_low": z_low,
         "zone_high": z_high,

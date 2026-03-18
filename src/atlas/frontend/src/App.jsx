@@ -18,6 +18,8 @@ const BITACORA_MODES = [
   { value: "SCALPING_M1", label: "SCALPING M1" },
   { value: "SCALPING_M5", label: "SCALPING M5" },
   { value: "FOREX", label: "FOREX" },
+  { value: "GAP", label: "GAP" },
+  { value: "PRESESION", label: "PRESESION" },
 ];
 
 const SYMBOLS_BY_WORLD = {
@@ -96,6 +98,11 @@ function decimalsBySymbol(sym) {
   if (sym.startsWith("USOIL")) return 2;
   if (sym.includes("JPY")) return 3;
   return 5;
+}
+
+function minMoveByDigits(digits) {
+  if (digits <= 0) return 1;
+  return 1 / 10 ** digits;
 }
 
 function formatNumber(v, digits = 2) {
@@ -303,7 +310,7 @@ function sideTextStyle() {
   };
 }
 
-function buildSymbolStateMap(scanRows, snapshotRows, symbols = []) {
+function buildSymbolStateMap(rows = [], symbols = []) {
   const order = {
     CLOSED: 0,
     SIN_SETUP: 1,
@@ -321,12 +328,7 @@ function buildSymbolStateMap(scanRows, snapshotRows, symbols = []) {
     out[sym] = { state: "SIN_SETUP", score: 0 };
   });
 
-  const mergedRows = [
-    ...(Array.isArray(scanRows) ? scanRows : []),
-    ...(Array.isArray(snapshotRows) ? snapshotRows : []),
-  ];
-
-  mergedRows.forEach((row) => {
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
     const sym = row?.symbol;
     const state = normalizeStateKey(row?.state);
     const score = Number(row?.score) || 0;
@@ -339,14 +341,66 @@ function buildSymbolStateMap(scanRows, snapshotRows, symbols = []) {
       (order[state] || 0) > (order[current.state] || 0) ||
       ((order[state] || 0) === (order[current.state] || 0) && score > (current.score || 0))
     ) {
-      out[sym] = {
-        state,
-        score,
-      };
+      out[sym] = { state, score };
     }
   });
 
   return out;
+}
+
+function resolveTradeLivePrice(row, analysis) {
+  const directCandidates = [
+    row?.price,
+    row?.last_price,
+    row?.current_price,
+    analysis?.price,
+  ];
+
+  for (const candidate of directCandidates) {
+    const n = Number(candidate);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+
+  const candles = Array.isArray(row?.candles) ? row.candles : [];
+  const last = candles[candles.length - 1];
+  const candleClose = Number(last?.c ?? last?.close);
+  if (Number.isFinite(candleClose) && candleClose > 0) return candleClose;
+
+  return null;
+}
+
+function getTradePositionStatus(row, analysis) {
+  const explicit = String(row?.trade_pnl_state || analysis?.trade_pnl_state || "").toUpperCase().trim();
+  if (explicit === "POSITIVE") return "POSITIVE";
+  if (explicit === "NEGATIVE") return "NEGATIVE";
+  if (explicit === "FLAT") return "NEUTRAL";
+
+  const state = normalizeStateKey(row?.state || analysis?.status);
+  if (!["ENTRY", "IN_TRADE", "TP1", "TP2", "RUN"].includes(state)) return null;
+
+  const side = String(row?.side || "").toUpperCase().trim();
+  const entry = Number(row?.entry);
+  const sl = Number(row?.sl);
+  const livePrice = resolveTradeLivePrice(row, analysis);
+
+  if (!["BUY", "SELL"].includes(side)) return null;
+  if (!Number.isFinite(entry) || !Number.isFinite(livePrice)) return null;
+
+  const tick = minMoveByDigits(decimalsBySymbol(row?.symbol));
+  const risk = Number.isFinite(sl) ? Math.abs(entry - sl) : 0;
+  const tolerance = risk > 0 ? Math.max(risk * 0.05, tick) : tick * 2;
+  const favorableMove = side === "BUY" ? livePrice - entry : entry - livePrice;
+
+  if (favorableMove < -tolerance) return "NEGATIVE";
+  if (Math.abs(favorableMove) <= tolerance) return "NEUTRAL";
+  return "POSITIVE";
+}
+
+function pnlStateColor(state) {
+  const s = String(state || "").toUpperCase().trim();
+  if (s === "POSITIVE") return "#63c787";
+  if (s === "NEGATIVE") return "#ff6b6b";
+  return "#9aa6b2";
 }
 
 function atlasTrafficLightFromRow(row, analysis, fallbackSymbol = "-") {
@@ -383,6 +437,50 @@ function atlasTrafficLightFromRow(row, analysis, fallbackSymbol = "-") {
     color: getStateColor(state),
     detail: `${sym} · ${tf} · score ${score}`,
   };
+}
+
+function applyTradePositionToTraffic(baseTraffic, row, analysis) {
+  const tradePosition = getTradePositionStatus(row, analysis);
+
+  if (tradePosition === "NEGATIVE") {
+    return {
+      ...baseTraffic,
+      icon: "ðŸ”´",
+      color: "#ff6b6b",
+      detail: `${baseTraffic.detail} Â· NEG`,
+    };
+  }
+
+  if (tradePosition === "NEUTRAL") {
+    return {
+      ...baseTraffic,
+      detail: `${baseTraffic.detail} Â· BE`,
+    };
+  }
+
+  return baseTraffic;
+}
+
+function applyTradePositionToTrafficStable(baseTraffic, row, analysis) {
+  const tradePosition = getTradePositionStatus(row, analysis);
+
+  if (tradePosition === "NEGATIVE") {
+    return {
+      ...baseTraffic,
+      icon: "\uD83D\uDD34",
+      color: "#ff6b6b",
+      detail: `${baseTraffic.detail} - NEG`,
+    };
+  }
+
+  if (tradePosition === "NEUTRAL") {
+    return {
+      ...baseTraffic,
+      detail: `${baseTraffic.detail} - BE`,
+    };
+  }
+
+  return baseTraffic;
 }
 
 function StatusPill({ label, value, active, accent }) {
@@ -422,16 +520,50 @@ function normalizeItems(value) {
 function extractClosedTrade(item) {
   return {
     ts: item?.ts || "-",
+    world: item?.world || "-",
+    atlas_mode: item?.atlas_mode || "-",
+    trade_id: item?.trade_id || "-",
+    leg_id: item?.leg_id ?? null,
+    partial_percent: item?.partial_percent ?? null,
     symbol: item?.symbol || "-",
     tf: item?.tf || "-",
+    score: item?.score ?? null,
     side: item?.side || "-",
+    lot: item?.lot ?? null,
+    lot_raw: item?.lot_raw ?? null,
+    lot_capped: item?.lot_capped ?? null,
+    lot_cap_reason: item?.lot_cap_reason ?? null,
     entry: item?.entry ?? null,
     sl: item?.sl ?? null,
     tp: item?.tp ?? null,
-    exit: item?.exit ?? null,
+    exit: item?.close_price ?? item?.exit ?? null,
     result: item?.result || "-",
     pips: item?.pips ?? null,
     usd: item?.usd ?? null,
+  };
+}
+
+function extractTradeSummary(item) {
+  return {
+    trade_id: item?.trade_id || "-",
+    world: item?.world || "-",
+    atlas_mode: item?.atlas_mode || item?.mode || "-",
+    symbol: item?.symbol || "-",
+    tf: item?.tf || "-",
+    side: item?.side || "-",
+    lot_total: item?.lot_total ?? null,
+    risk_percent: item?.risk_percent ?? null,
+    pnl_total_usd: item?.pnl_total_usd ?? null,
+    pnl_total_points: item?.pnl_total_points ?? null,
+    legs_count: item?.legs_count ?? null,
+    exit_final_reason: item?.exit_final_reason || "-",
+    score_max: item?.score_max ?? null,
+    score_avg: item?.score_avg ?? null,
+    had_partial: item?.had_partial ?? null,
+    had_be_close: item?.had_be_close ?? null,
+    had_tp2: item?.had_tp2 ?? null,
+    opened_at: item?.opened_at || "-",
+    closed_at: item?.closed_at || "-",
   };
 }
 
@@ -491,7 +623,13 @@ function snapshotSignature(snapshotData) {
     row?.entry ?? "",
     row?.sl ?? "",
     row?.tp ?? "",
+    row?.tp1 ?? "",
+    row?.tp1_price ?? "",
+    row?.floating_usd ?? "",
+    row?.trade_pnl_state ?? "",
     snapshotData?.analysis?.status ?? "",
+    snapshotData?.analysis?.floating_usd ?? "",
+    snapshotData?.analysis?.trade_pnl_state ?? "",
     snapshotData?.control?.engine_running ?? "",
     snapshotData?.control?.feed_running ?? "",
   ].join("|");
@@ -509,6 +647,8 @@ function scanRowsSignature(rows) {
         r?.entry ?? "",
         r?.sl ?? "",
         r?.tp ?? "",
+        r?.tp1 ?? "",
+        r?.tp1_price ?? "",
         r?.tp2 ?? "",
         r?.updated_at ?? "",
       ].join(":")
@@ -523,13 +663,20 @@ function summarySignature(summary) {
     summary.entries ?? "",
     summary.in_trade ?? "",
     summary.run ?? "",
+    summary.live ?? "",
   ].join("|");
 }
 
 function bitClosedSignature(items) {
   if (!Array.isArray(items)) return "[]";
   const last = items[items.length - 1] || {};
-  return `${items.length}|${last.ts ?? ""}|${last.symbol ?? ""}|${last.result ?? ""}|${last.usd ?? ""}`;
+  return `${items.length}|${last.ts ?? ""}|${last.symbol ?? ""}|${last.result ?? ""}|${last.usd ?? ""}|${last.score ?? ""}`;
+}
+
+function bitSummarySignature(items) {
+  if (!Array.isArray(items)) return "[]";
+  const last = items[items.length - 1] || {};
+  return `${items.length}|${last.trade_id ?? ""}|${last.symbol ?? ""}|${last.pnl_total_usd ?? ""}|${last.legs_count ?? ""}|${last.exit_final_reason ?? ""}`;
 }
 
 function bitTailSignature(value) {
@@ -558,7 +705,13 @@ export default function App() {
   const [scanRows, setScanRows] = useState([]);
   const [scanSummary, setScanSummary] = useState({});
   const [bitClosed, setBitClosed] = useState([]);
+  const [bitSummary, setBitSummary] = useState([]);
   const [bitTail, setBitTail] = useState(null);
+  const [bitMetrics, setBitMetrics] = useState({});
+  const [bitSummaryMetrics, setBitSummaryMetrics] = useState({});
+  const [bitacoraSymbol, setBitacoraSymbol] = useState("");
+  const [bitacoraFromTs, setBitacoraFromTs] = useState("");
+  const [bitacoraToTs, setBitacoraToTs] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -568,7 +721,9 @@ export default function App() {
   const lastScanRowsSigRef = useRef("");
   const lastScanSummarySigRef = useRef("");
   const lastBitClosedSigRef = useRef("");
+  const lastBitSummarySigRef = useRef("");
   const lastBitTailSigRef = useRef("");
+  const lastSymbolStateRef = useRef({});
 
   const symbols = useMemo(() => SYMBOLS_BY_WORLD[world] || [], [world]);
 
@@ -611,30 +766,25 @@ export default function App() {
   const engineRunning = Boolean(control?.engine_running);
   const feedRunning = Boolean(control?.feed_running);
 
-  const symbolStateMap = useMemo(() => {
-  const mergedRows = Array.isArray(scanRows) ? [...scanRows] : [];
+const selectedScanRow = useMemo(() => {
+  return scanRows.find((r) => r?.symbol === symbol) || null;
+}, [scanRows, symbol]);
 
-  if (activeRow?.symbol) {
-    const idx = mergedRows.findIndex((r) => r?.symbol === activeRow.symbol);
-    if (idx >= 0) {
-      mergedRows[idx] = { ...mergedRows[idx], ...activeRow };
-    } else {
-      mergedRows.push(activeRow);
-    }
-  }
+const snapshotActiveRow = useMemo(() => {
+  const snapRows = Array.isArray(snapshot?.ui?.rows) ? snapshot.ui.rows : [];
+  return snapRows.find((r) => r?.symbol === symbol) || snapRows[0] || null;
+}, [snapshot, symbol]);
 
-  return buildSymbolStateMap(mergedRows, symbols);
-}, [scanRows, symbols, activeRow]);
+const snapshotHasFrozenPlan = useMemo(() => {
+  const s = String(snapshotActiveRow?.state || "").toUpperCase().trim();
+  return ["SET_UP", "ENTRY", "IN_TRADE", "TP1", "TP2", "RUN"].includes(s);
+}, [snapshotActiveRow]);
 
-  const selectedScanRow = useMemo(() => {
-    return scanRows.find((r) => r?.symbol === symbol) || null;
-  }, [scanRows, symbol]);
-
-  const activeRow = useMemo(() => {
-    if (selectedScanRow) return selectedScanRow;
-    const snapRows = Array.isArray(snapshot?.ui?.rows) ? snapshot.ui.rows : [];
-    return snapRows.find((r) => r?.symbol === symbol) || snapRows[0] || null;
-  }, [selectedScanRow, snapshot, symbol]);
+const activeRow = useMemo(() => {
+  if (snapshotHasFrozenPlan) return snapshotActiveRow;
+  if (selectedScanRow) return selectedScanRow;
+  return snapshotActiveRow;
+}, [snapshotHasFrozenPlan, snapshotActiveRow, selectedScanRow]);
 
   const bottomRows = useMemo(() => {
     if (activeRow) return [activeRow];
@@ -643,13 +793,72 @@ export default function App() {
     return [];
   }, [activeRow, snapshot]);
 
+  const symbolStateMap = useMemo(() => {
+    const mergedRows = Array.isArray(scanRows) ? [...scanRows] : [];
+
+    if (activeRow?.symbol) {
+      const idx = mergedRows.findIndex((r) => r?.symbol === activeRow.symbol);
+      if (idx >= 0) {
+        mergedRows[idx] = { ...mergedRows[idx], ...activeRow };
+      } else {
+        mergedRows.push(activeRow);
+      }
+    }
+
+    const freshMap = buildSymbolStateMap(mergedRows, symbols);
+
+    const hasAnyUsefulData =
+      Array.isArray(scanRows) && scanRows.length > 0;
+
+    if (hasAnyUsefulData) {
+      lastSymbolStateRef.current = freshMap;
+      return freshMap;
+    }
+
+    return Object.keys(lastSymbolStateRef.current || {}).length
+      ? lastSymbolStateRef.current
+      : freshMap;
+  }, [scanRows, symbols, activeRow]);
+
   const traffic = useMemo(() => {
-    return atlasTrafficLightFromRow(activeRow, analysis, symbol);
+    return applyTradePositionToTrafficStable(
+      atlasTrafficLightFromRow(activeRow, analysis, symbol),
+      activeRow,
+      analysis
+    );
   }, [activeRow, analysis, symbol]);
+
+  const activeTradePnlState = String(
+    activeRow?.trade_pnl_state || analysis?.trade_pnl_state || "FLAT"
+  ).toUpperCase();
+  const activeFloatingUsd =
+    Number.isFinite(Number(activeRow?.floating_usd))
+      ? Number(activeRow?.floating_usd)
+      : Number.isFinite(Number(analysis?.floating_usd))
+        ? Number(analysis?.floating_usd)
+        : null;
+  const activeFloatingMove =
+    Number.isFinite(Number(activeRow?.floating_point_move))
+      ? Number(activeRow?.floating_point_move)
+      : Number.isFinite(Number(analysis?.floating_point_move))
+        ? Number(analysis?.floating_point_move)
+        : Number.isFinite(Number(activeRow?.floating_pip_move))
+          ? Number(activeRow?.floating_pip_move)
+          : Number.isFinite(Number(analysis?.floating_pip_move))
+            ? Number(analysis?.floating_pip_move)
+            : Number.isFinite(Number(activeRow?.floating_price_move))
+              ? Number(activeRow?.floating_price_move)
+              : Number.isFinite(Number(analysis?.floating_price_move))
+                ? Number(analysis?.floating_price_move)
+                : null;
 
   const bitRows = useMemo(() => {
     return normalizeItems(bitClosed).map(extractClosedTrade);
   }, [bitClosed]);
+
+  const bitSummaryRows = useMemo(() => {
+    return normalizeItems(bitSummary).map(extractTradeSummary);
+  }, [bitSummary]);
 
   const bitTotals = useMemo(() => {
     const totalUsd = bitRows.reduce((acc, row) => {
@@ -669,6 +878,15 @@ export default function App() {
     };
   }, [bitRows]);
 
+  const bitacoraQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("mode", bitacoraMode);
+    if (bitacoraSymbol.trim()) params.set("symbol", bitacoraSymbol.trim());
+    if (bitacoraFromTs) params.set("from_ts", new Date(bitacoraFromTs).toISOString());
+    if (bitacoraToTs) params.set("to_ts", new Date(bitacoraToTs).toISOString());
+    return params.toString();
+  }, [bitacoraMode, bitacoraSymbol, bitacoraFromTs, bitacoraToTs]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -685,7 +903,7 @@ export default function App() {
       if (world === "BITACORA") return;
 
       if (snapshotInFlightRef.current) {
-        snapshotTimer = setTimeout(tickSnapshot, getPollMs(1800, 4000));
+        snapshotTimer = setTimeout(tickSnapshot, getPollMs(1700, 3500));
         return;
       }
 
@@ -727,7 +945,7 @@ export default function App() {
         snapshotInFlightRef.current = false;
         if (!cancelled) {
           setLoading(false);
-          snapshotTimer = setTimeout(tickSnapshot, getPollMs(1800, 4000));
+          snapshotTimer = setTimeout(tickSnapshot, getPollMs(1700, 3500));
         }
       }
     }
@@ -737,7 +955,7 @@ export default function App() {
 
       if (world === "BITACORA") {
         if (scanInFlightRef.current) {
-          scanTimer = setTimeout(tickScan, getPollMs(15000, 30000));
+          scanTimer = setTimeout(tickScan, getPollMs(12000, 24000));
           return;
         }
 
@@ -745,11 +963,14 @@ export default function App() {
         controllerScan = new AbortController();
 
         try {
-          const [closedRes, tailRes] = await Promise.allSettled([
-            fetchJson(`/api/bitacora/closed?mode=${encodeURIComponent(bitacoraMode)}`, {
+          const [closedRes, summaryRes, tailRes] = await Promise.allSettled([
+            fetchJson(`/api/bitacora/closed?${bitacoraQuery}`, {
               signal: controllerScan.signal,
             }),
-            fetchJson(`/api/bitacora/tail?mode=${encodeURIComponent(bitacoraMode)}`, {
+            fetchJson(`/api/bitacora/summary?${bitacoraQuery}`, {
+              signal: controllerScan.signal,
+            }),
+            fetchJson(`/api/bitacora/tail?${bitacoraQuery}`, {
               signal: controllerScan.signal,
             }),
           ]);
@@ -757,9 +978,15 @@ export default function App() {
           if (cancelled) return;
 
           const nextBitClosed = closedRes.status === "fulfilled" ? normalizeItems(closedRes.value) : [];
+          const nextBitSummary = summaryRes.status === "fulfilled" ? normalizeItems(summaryRes.value) : [];
           const nextBitTail = tailRes.status === "fulfilled" ? tailRes.value : null;
+          const nextBitMetrics =
+            closedRes.status === "fulfilled" ? closedRes.value?.metrics_summary || {} : {};
+          const nextBitSummaryMetrics =
+            summaryRes.status === "fulfilled" ? summaryRes.value?.metrics_summary || {} : {};
 
           const nextBitClosedSig = bitClosedSignature(nextBitClosed);
+          const nextBitSummarySig = bitSummarySignature(nextBitSummary);
           const nextBitTailSig = bitTailSignature(nextBitTail);
 
           if (lastBitClosedSigRef.current !== nextBitClosedSig) {
@@ -767,10 +994,18 @@ export default function App() {
             setBitClosed(nextBitClosed);
           }
 
+          if (lastBitSummarySigRef.current !== nextBitSummarySig) {
+            lastBitSummarySigRef.current = nextBitSummarySig;
+            setBitSummary(nextBitSummary);
+          }
+
           if (lastBitTailSigRef.current !== nextBitTailSig) {
             lastBitTailSigRef.current = nextBitTailSig;
             setBitTail(nextBitTail);
           }
+
+          setBitMetrics(nextBitMetrics);
+          setBitSummaryMetrics(nextBitSummaryMetrics);
 
           setLastUpdate(new Date().toLocaleTimeString());
         } catch (err) {
@@ -783,7 +1018,7 @@ export default function App() {
           scanInFlightRef.current = false;
           if (!cancelled) {
             setLoading(false);
-            scanTimer = setTimeout(tickScan, getPollMs(15000, 30000));
+            scanTimer = setTimeout(tickScan, getPollMs(12000, 24000));
           }
         }
 
@@ -791,7 +1026,7 @@ export default function App() {
       }
 
       if (scanInFlightRef.current) {
-        scanTimer = setTimeout(tickScan, getPollMs(20000, 40000));
+        scanTimer = setTimeout(tickScan, getPollMs(5000, 9000));
         return;
       }
 
@@ -802,7 +1037,7 @@ export default function App() {
         const scanParams = new URLSearchParams({
           world,
           atlas_mode: effectiveAtlasMode,
-          count: "40",
+          count: "80",
         });
 
         const scanData = await fetchJson(`/api/scan?${scanParams.toString()}`, {
@@ -835,21 +1070,16 @@ export default function App() {
       } finally {
         scanInFlightRef.current = false;
         if (!cancelled) {
-          scanTimer = setTimeout(tickScan, getPollMs(20000, 40000));
+          scanTimer = setTimeout(tickScan, getPollMs(5000, 9000));
         }
       }
     }
 
-  setLoading(true);
+    setLoading(true);
+    tickSnapshot();
 
-Promise.resolve()
-  .then(() => tickSnapshot())
-  .finally(() => {
-    setLoading(false);
-  });
-
-const firstScanDelay = world === "BITACORA" ? 6000 : 12000;
-scanTimer = setTimeout(tickScan, firstScanDelay);
+    const firstScanDelay = world === "BITACORA" ? 2500 : 2500;
+    scanTimer = setTimeout(tickScan, firstScanDelay);
 
     return () => {
       cancelled = true;
@@ -860,7 +1090,7 @@ scanTimer = setTimeout(tickScan, firstScanDelay);
       if (controllerSnapshot) controllerSnapshot.abort();
       if (controllerScan) controllerScan.abort();
     };
-  }, [world, effectiveAtlasMode, bitacoraMode, symbol, currentTf]);
+  }, [world, effectiveAtlasMode, bitacoraMode, bitacoraQuery, symbol, currentTf]);
 
   const renderMainTable = () => (
     <div style={styles.tableWrap}>
@@ -891,8 +1121,26 @@ scanTimer = setTimeout(tickScan, firstScanDelay);
           ) : (
             bottomRows.map((row, index) => {
               const digits = decimalsBySymbol(row?.symbol);
-              const tp1 = row?.parcial ?? row?.partial ?? row?.tp1 ?? row?.tp ?? null;
-              const tp2 = row?.tp2 ?? row?.tp ?? null;
+
+              const tp1 =
+                row?.parcial ??
+                row?.partial ??
+                row?.tp1 ??
+                row?.tp1_price ??
+                row?.tp_first ??
+                row?.tp_1 ??
+                row?.first_tp ??
+                row?.tp ??
+                null;
+
+              const tp2 =
+                row?.tp2 ??
+                row?.tp_second ??
+                row?.tp_2 ??
+                row?.second_tp ??
+                row?.tp ??
+                null;
+
               const lot = Number.isFinite(Number(row?.lot)) ? Number(row.lot) : null;
 
               return (
@@ -951,10 +1199,86 @@ scanTimer = setTimeout(tickScan, firstScanDelay);
         <div style={styles.kpiStrip}>
           <KpiBox label="WORLD" value="BITACORA" />
           <KpiBox label="MODE" value={bitacoraMode} />
-          <KpiBox label="CERRADOS" value={String(bitTotals.count)} />
+          <KpiBox label="TRADES" value={String(bitSummaryMetrics?.total_trades ?? bitMetrics?.total_trades ?? bitTotals.count)} />
+          <KpiBox label="WIN RATE" value={`${formatNumber(bitSummaryMetrics?.win_rate ?? bitMetrics?.win_rate, 2)}%`} />
+          <a
+            href={`/api/bitacora/export?${bitacoraQuery}`}
+            style={{
+              ...styles.segBtn,
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+            }}
+          >
+            LEGS CSV
+          </a>
+          <a
+            href={`/api/bitacora/export?${bitacoraQuery}&format=json`}
+            style={{
+              ...styles.segBtn,
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+            }}
+          >
+            LEGS JSON
+          </a>
+          <a
+            href={`/api/bitacora/summary/export?${bitacoraQuery}`}
+            style={{
+              ...styles.segBtn,
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+            }}
+          >
+            SUMMARY CSV
+          </a>
+          <a
+            href={`/api/bitacora/summary/export?${bitacoraQuery}&format=json`}
+            style={{
+              ...styles.segBtn,
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+            }}
+          >
+            SUMMARY JSON
+          </a>
           <KpiBox label="PIPS Σ" value={formatSigned(bitTotals.totalPips, 1)} />
-          <KpiBox label="USD Σ" value={formatSigned(bitTotals.totalUsd, 2)} />
+          <KpiBox label="USD Σ" value={formatSigned(bitMetrics?.total_pnl_usd ?? bitTotals.totalUsd, 2)} />
         </div>
+      </section>
+
+      <section style={styles.bitFilterRow}>
+        <input
+          value={bitacoraSymbol}
+          onChange={(e) => setBitacoraSymbol(e.target.value.toUpperCase())}
+          placeholder="SYMBOL"
+          style={styles.bitInput}
+        />
+        <input
+          type="datetime-local"
+          value={bitacoraFromTs}
+          onChange={(e) => setBitacoraFromTs(e.target.value)}
+          style={styles.bitInput}
+        />
+        <input
+          type="datetime-local"
+          value={bitacoraToTs}
+          onChange={(e) => setBitacoraToTs(e.target.value)}
+          style={styles.bitInput}
+        />
+        <button
+          onClick={() => {
+            setBitacoraSymbol("");
+            setBitacoraFromTs("");
+            setBitacoraToTs("");
+          }}
+          style={styles.segBtn}
+        >
+          LIMPIAR FILTROS
+        </button>
       </section>
 
       <div style={styles.bitGrid}>
@@ -964,7 +1288,7 @@ scanTimer = setTimeout(tickScan, firstScanDelay);
             <table style={styles.table}>
               <thead>
                 <tr>
-                  {["TIME", "SYMBOL", "TF", "SIDE", "RESULT", "PE", "TP2", "EXIT", "SL", "PIPS", "USD"].map((c) => (
+                  {["TIME", "WORLD", "MODE", "TRADE", "LEG", "PARTIAL %", "SYMBOL", "TF", "SCORE", "SIDE", "LOT", "RESULT", "PE", "TP2", "EXIT", "SL", "PIPS", "USD"].map((c) => (
                     <th key={c} style={styles.th}>{c}</th>
                   ))}
                 </tr>
@@ -972,7 +1296,7 @@ scanTimer = setTimeout(tickScan, firstScanDelay);
               <tbody>
                 {!bitRows.length ? (
                   <tr>
-                    <td colSpan={11} style={styles.emptyCell}>Sin datos</td>
+                    <td colSpan={18} style={styles.emptyCell}>Sin datos</td>
                   </tr>
                 ) : (
                   bitRows.slice(-250).reverse().map((row, i) => {
@@ -981,9 +1305,16 @@ scanTimer = setTimeout(tickScan, firstScanDelay);
                     return (
                       <tr key={i} style={styles.tr}>
                         <td style={styles.td}>{row.ts}</td>
+                        <td style={styles.td}>{row.world}</td>
+                        <td style={styles.td}>{row.atlas_mode}</td>
+                        <td style={styles.td}>{row.trade_id}</td>
+                        <td style={styles.td}>{formatNumber(row.leg_id, 0)}</td>
+                        <td style={styles.td}>{formatNumber(row.partial_percent, 0)}</td>
                         <td style={styles.td}>{row.symbol}</td>
                         <td style={styles.td}>{row.tf}</td>
+                        <td style={styles.td}>{formatNumber(row.score, 0)}</td>
                         <td style={styles.td}>{row.side}</td>
+                        <td style={styles.td}>{formatNumber(row.lot, 2)}</td>
                         <td style={styles.td}>
                           <span style={resultBadgeStyle(row.result)}>{row.result}</span>
                         </td>
@@ -1003,10 +1334,72 @@ scanTimer = setTimeout(tickScan, firstScanDelay);
         </div>
 
         <div style={styles.cardBitSide}>
+          <div style={styles.cardTitle}>METRICS SUMMARY</div>
+          <div style={styles.metricList}>
+            <div style={styles.metricRow}><span>Total trades</span><strong>{bitSummaryMetrics?.total_trades ?? 0}</strong></div>
+            <div style={styles.metricRow}><span>Win / Loss / Flat</span><strong>{`${bitSummaryMetrics?.win_trades ?? 0} / ${bitSummaryMetrics?.loss_trades ?? 0} / ${bitSummaryMetrics?.flat_trades ?? 0}`}</strong></div>
+            <div style={styles.metricRow}><span>Avg trade USD</span><strong>{formatSigned(bitSummaryMetrics?.avg_trade_usd, 2)}</strong></div>
+            <div style={styles.metricRow}><span>Avg win / loss</span><strong>{`${formatSigned(bitSummaryMetrics?.avg_win_usd, 2)} / ${formatSigned(bitSummaryMetrics?.avg_loss_usd, 2)}`}</strong></div>
+            <div style={styles.metricRow}><span>Max win / loss</span><strong>{`${formatSigned(bitSummaryMetrics?.max_win_usd, 2)} / ${formatSigned(bitSummaryMetrics?.max_loss_usd, 2)}`}</strong></div>
+            <div style={styles.metricRow}><span>Partials / TP2 / SL</span><strong>{`${bitSummaryMetrics?.total_partials ?? 0} / ${bitSummaryMetrics?.total_tp2_final ?? 0} / ${bitSummaryMetrics?.total_sl ?? 0}`}</strong></div>
+            <div style={styles.metricRow}><span>BE / Manual</span><strong>{`${bitSummaryMetrics?.total_be_close ?? 0} / ${bitSummaryMetrics?.total_manual_close ?? 0}`}</strong></div>
+            <div style={styles.metricRow}><span>Symbols</span><strong>{bitSummaryMetrics?.symbols_count ?? 0}</strong></div>
+            <div style={styles.metricRow}><span>Best symbol</span><strong>{bitSummaryMetrics?.best_symbol_by_usd?.symbol ? `${bitSummaryMetrics.best_symbol_by_usd.symbol} ${formatSigned(bitSummaryMetrics.best_symbol_by_usd.usd, 2)}` : "-"}</strong></div>
+            <div style={styles.metricRow}><span>Worst symbol</span><strong>{bitSummaryMetrics?.worst_symbol_by_usd?.symbol ? `${bitSummaryMetrics.worst_symbol_by_usd.symbol} ${formatSigned(bitSummaryMetrics.worst_symbol_by_usd.usd, 2)}` : "-"}</strong></div>
+          </div>
+
           <div style={styles.cardTitle}>LOG CRUDO</div>
           <pre style={styles.preMajestic}>
             {bitTail ? JSON.stringify(bitTail, null, 2) : "Sin datos"}
           </pre>
+        </div>
+      </div>
+
+      <div style={styles.cardBitBig}>
+        <div style={styles.cardTitle}>TRADE SUMMARY</div>
+        <div style={styles.tableWrap}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                {["TRADE ID", "WORLD", "MODE", "SYMBOL", "TF", "SIDE", "LOT", "RISK %", "USD", "POINTS", "LEGS", "EXIT", "SCORE MAX", "SCORE AVG", "PARTIAL", "BE", "TP2", "OPENED", "CLOSED"].map((c) => (
+                  <th key={c} style={styles.th}>{c}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {!bitSummaryRows.length ? (
+                <tr>
+                  <td colSpan={19} style={styles.emptyCell}>Sin datos</td>
+                </tr>
+              ) : (
+                bitSummaryRows.slice(-250).reverse().map((row, i) => (
+                  <tr key={`${row.trade_id}-${i}`} style={styles.tr}>
+                    <td style={styles.td}>{row.trade_id}</td>
+                    <td style={styles.td}>{row.world}</td>
+                    <td style={styles.td}>{row.atlas_mode}</td>
+                    <td style={styles.td}>{row.symbol}</td>
+                    <td style={styles.td}>{row.tf}</td>
+                    <td style={styles.td}>{row.side}</td>
+                    <td style={styles.td}>{formatNumber(row.lot_total, 2)}</td>
+                    <td style={styles.td}>{formatNumber(row.risk_percent, 2)}</td>
+                    <td style={styles.td}>{formatSigned(row.pnl_total_usd, 2)}</td>
+                    <td style={styles.td}>{formatSigned(row.pnl_total_points, 2)}</td>
+                    <td style={styles.td}>{formatNumber(row.legs_count, 0)}</td>
+                    <td style={styles.td}>
+                      <span style={resultBadgeStyle(row.exit_final_reason)}>{row.exit_final_reason}</span>
+                    </td>
+                    <td style={styles.td}>{formatNumber(row.score_max, 2)}</td>
+                    <td style={styles.td}>{formatNumber(row.score_avg, 2)}</td>
+                    <td style={styles.td}>{row.had_partial ? "YES" : "NO"}</td>
+                    <td style={styles.td}>{row.had_be_close ? "YES" : "NO"}</td>
+                    <td style={styles.td}>{row.had_tp2 ? "YES" : "NO"}</td>
+                    <td style={styles.td}>{row.opened_at}</td>
+                    <td style={styles.td}>{row.closed_at}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -1021,7 +1414,12 @@ scanTimer = setTimeout(tickScan, firstScanDelay);
     const note = activeRow?.note || analysis?.reason || "Sin detalle";
     const digits = decimalsBySymbol(symbol);
     const pe = activeRow?.entry ?? null;
-    const tp1 = activeRow?.parcial ?? activeRow?.tp1 ?? null;
+    const tp1 =
+      activeRow?.parcial ??
+      activeRow?.tp1 ??
+      activeRow?.tp1_price ??
+      activeRow?.tp ??
+      null;
     const tp2 = activeRow?.tp2 ?? activeRow?.tp ?? null;
     const sl = activeRow?.sl ?? null;
 
@@ -1081,6 +1479,18 @@ scanTimer = setTimeout(tickScan, firstScanDelay);
             <StatusPill label="ENGINE" value={engineRunning ? "ON" : "OFF"} active={engineRunning} accent="#63c787" />
             <StatusPill label="FEED" value={feedRunning ? "LIVE" : "PAUSE"} active={feedRunning} accent="#5da8ff" />
             <StatusPill label="FREEZE" value={String(frozenPlans)} active={frozenPlans > 0} accent={activeAccent} />
+            <StatusPill
+              label="TRADE"
+              value={activeFloatingUsd === null ? activeTradePnlState : formatSigned(activeFloatingUsd, 2)}
+              active={activeFloatingUsd !== null || activeTradePnlState !== "FLAT"}
+              accent={pnlStateColor(activeTradePnlState)}
+            />
+            <StatusPill
+              label="MOVE"
+              value={activeFloatingMove === null ? "-" : formatSigned(activeFloatingMove, 2)}
+              active={activeFloatingMove !== null}
+              accent={pnlStateColor(activeTradePnlState)}
+            />
             <StatusPill label="UPDATE" value={lastUpdate || "-"} active={false} accent={activeAccent} />
 
             {world !== "BITACORA" && (
@@ -1214,21 +1624,33 @@ scanTimer = setTimeout(tickScan, firstScanDelay);
               <div style={styles.chartTopbar}>
                 <div>
                   <div style={styles.instrument}>{symbol || "-"}</div>
-                  <div style={styles.instrumentMeta}>
-                    {world === "ATLAS_IA"
-                      ? `${world} - ${effectiveAtlasMode} - ${stateLabel(activeRow?.state || analysis?.status || "SIN_SETUP")} - ${currentTf}`
-                      : `${world} - ${stateLabel(activeRow?.state || analysis?.status || "SIN_SETUP")} - ${currentTf}`}
+                  <div style={{ ...styles.instrumentMeta, display: "inline-flex", alignItems: "center", gap: 10 }}>
+                    <span
+                      style={{
+                        width: 11,
+                        height: 11,
+                        borderRadius: 999,
+                        background: pnlStateColor(activeTradePnlState),
+                        display: "inline-block",
+                        boxShadow: `0 0 0 1px ${withAlpha(pnlStateColor(activeTradePnlState), 0.28)}`,
+                      }}
+                    />
+                    <span>
+                      {world === "ATLAS_IA"
+                        ? `${world} - ${effectiveAtlasMode} - ${stateLabel(activeRow?.state || analysis?.status || "SIN_SETUP")} - ${currentTf}`
+                        : `${world} - ${stateLabel(activeRow?.state || analysis?.status || "SIN_SETUP")} - ${currentTf}`}
+                    </span>
                   </div>
                 </div>
               </div>
 
               <div style={styles.chartFrame}>
                 <Charts
-  key={`${world}-${effectiveAtlasMode}-${symbol}-${currentTf}`}
-  snapshot={snapshot}
-  activeRow={activeRow}
-  accent={activeAccent}
-/>
+                  key={`${world}-${effectiveAtlasMode}-${symbol}-${currentTf}`}
+                  snapshot={snapshot}
+                  activeRow={activeRow}
+                  accent={activeAccent}
+                />
               </div>
             </section>
 
@@ -1424,7 +1846,23 @@ const styles = {
     flexWrap: "wrap",
     alignItems: "center",
   },
+  bitFilterRow: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+    alignItems: "center",
+  },
   kpiStrip: { display: "flex", gap: 8, flexWrap: "wrap" },
+  bitInput: {
+    minWidth: 160,
+    borderRadius: 12,
+    padding: "10px 12px",
+    border: "1px solid rgba(255,255,255,0.10)",
+    background: "rgba(255,255,255,0.03)",
+    color: "#eef3fb",
+    fontSize: 13,
+    outline: "none",
+  },
   kpiBox: {
     minWidth: 96,
     borderRadius: 12,
@@ -1454,8 +1892,19 @@ const styles = {
     boxShadow: "0 0 0 1px rgba(183,132,255,0.08), 0 16px 38px rgba(0,0,0,0.18)",
   },
   cardTitle: { fontSize: 16, fontWeight: 900, letterSpacing: 0.4 },
+  metricList: { display: "grid", gap: 8 },
+  metricRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "8px 10px",
+    borderRadius: 12,
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.06)",
+    fontSize: 13,
+  },
   tableWrap: { width: "100%", overflowX: "auto" },
-  table: { width: "100%", minWidth: 1220, borderCollapse: "collapse" },
+  table: { width: "100%", minWidth: 1320, borderCollapse: "collapse" },
   th: {
     textAlign: "left",
     padding: "14px 14px",

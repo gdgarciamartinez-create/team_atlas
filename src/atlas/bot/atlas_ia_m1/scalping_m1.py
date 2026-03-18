@@ -8,7 +8,7 @@ from atlas.bot.analysis.scoring import calc_score
 
 
 def _micro_impulse(candles: List[Dict[str, Any]]):
-    if len(candles) < 16:
+    if len(candles) < 20:
         return None
 
     window = candles[-16:]
@@ -75,15 +75,104 @@ def _build_wait_row(symbol: str, tf: str, note: str) -> Dict[str, Any]:
     }
 
 
-def _resolve_state(score: int, inside_zone: bool, near_zone: bool, sweep_valid: bool) -> str:
-    if inside_zone and sweep_valid and score >= 9:
+def _consecutive_closes_ok(candles: List[Dict[str, Any]], side: str) -> bool:
+    if len(candles) < 3:
+        return False
+
+    c1 = float(candles[-2]["c"])
+    o1 = float(candles[-2]["o"])
+    c2 = float(candles[-1]["c"])
+    o2 = float(candles[-1]["o"])
+
+    if side == "BUY":
+        return c1 > o1 and c2 > o2 and c2 >= c1
+    return c1 < o1 and c2 < o2 and c2 <= c1
+
+
+def _impulse_followthrough_ok(candles: List[Dict[str, Any]], side: str) -> bool:
+    if len(candles) < 4:
+        return False
+
+    closes = [float(c["c"]) for c in candles[-4:]]
+
+    if side == "BUY":
+        advances = 0
+        for i in range(1, len(closes)):
+            if closes[i] >= closes[i - 1]:
+                advances += 1
+        return advances >= 2
+
+    declines = 0
+    for i in range(1, len(closes)):
+        if closes[i] <= closes[i - 1]:
+            declines += 1
+    return declines >= 2
+
+
+def _distance_from_sweep_ok(
+    candles: List[Dict[str, Any]],
+    side: str,
+    last_price: float,
+    sl: float,
+) -> bool:
+    if len(candles) < 2:
+        return False
+
+    risk = abs(last_price - sl)
+    if risk <= 0:
+        return False
+
+    last_candle = candles[-1]
+    low = float(last_candle["l"])
+    high = float(last_candle["h"])
+
+    min_required = risk * 0.30
+
+    if side == "BUY":
+        travelled = last_price - low
+        return travelled >= min_required
+
+    travelled = high - last_price
+    return travelled >= min_required
+
+
+def _outside_dead_zone(
+    last_price: float,
+    zone_low: float,
+    zone_high: float,
+) -> bool:
+    zone_size = abs(zone_high - zone_low)
+    if zone_size <= 0:
+        return False
+
+    dead = zone_size * 0.10
+    inner_low = zone_low + dead
+    inner_high = zone_high - dead
+
+    return not (inner_low <= last_price <= inner_high)
+
+
+def _resolve_state(
+    score: int,
+    inside_zone: bool,
+    near_zone: bool,
+    sweep_valid: bool,
+    double_close_ok: bool,
+    distance_ok: bool,
+    dead_zone_ok: bool,
+) -> str:
+    if inside_zone and sweep_valid and score >= 9 and double_close_ok and distance_ok and dead_zone_ok:
         return "ENTRY"
+
     if inside_zone and score >= 8:
         return "SET_UP"
+
     if near_zone and score >= 7:
         return "SET_UP"
+
     if sweep_valid and score >= 7:
         return "SET_UP"
+
     return "SIN_SETUP"
 
 
@@ -98,7 +187,7 @@ def run_world_rows(
     payload = candles_by_symbol[symbol]
     candles = payload["candles"]
 
-    if not isinstance(candles, list) or len(candles) < 16:
+    if not isinstance(candles, list) or len(candles) < 20:
         row = _build_wait_row(symbol, tf, "Sin micro impulso")
         return (
             {"world": world, "action": "WAIT", "signals": 0, "reason": "Sin micro impulso", "score": 0},
@@ -137,20 +226,26 @@ def run_world_rows(
 
     sweep = detect_sweep(candles, side=direction, lookback=10)
 
-    last_4_dir = 0
-    closes = [c["c"] for c in candles[-5:]]
-    for i in range(1, len(closes)):
-        if direction == "BUY" and closes[i] >= closes[i - 1]:
-            last_4_dir += 1
-        elif direction == "SELL" and closes[i] <= closes[i - 1]:
-            last_4_dir += 1
+    followthrough_ok = _impulse_followthrough_ok(candles, direction)
+    double_close_ok = _consecutive_closes_ok(candles, direction)
+    distance_ok = _distance_from_sweep_ok(candles, direction, last_price, sl)
+    dead_zone_ok = _outside_dead_zone(last_price, zone_low, zone_high)
 
     context_ok = True
-    timing_ok = inside_zone or last_4_dir >= 2
+    timing_ok = inside_zone or followthrough_ok
     structure_dirty = False
     late_entry = not near_zone
     spread_bad = False
-    confluence_bonus = 1 if near_zone else 0
+
+    confluence_bonus = 0
+    if near_zone:
+        confluence_bonus += 1
+    if double_close_ok:
+        confluence_bonus += 1
+    if distance_ok:
+        confluence_bonus += 1
+    if dead_zone_ok:
+        confluence_bonus += 1
 
     score_pack = calc_score(
         side=direction,
@@ -168,12 +263,26 @@ def run_world_rows(
     )
 
     score = int(score_pack["score"])
-    state = _resolve_state(score, inside_zone, near_zone, bool(sweep["valid"]))
 
-    # Forzamos SET_UP si está cerca de zona aunque el score venga tímido
-    if state == "SIN_SETUP" and near_zone and score >= 6:
+    state = _resolve_state(
+        score=score,
+        inside_zone=inside_zone,
+        near_zone=near_zone,
+        sweep_valid=bool(sweep["valid"]),
+        double_close_ok=double_close_ok,
+        distance_ok=distance_ok,
+        dead_zone_ok=dead_zone_ok,
+    )
+
+    if state == "SIN_SETUP" and near_zone and score >= 7 and dead_zone_ok:
         state = "SET_UP"
         score = max(score, 7)
+
+    if state == "SET_UP" and not dead_zone_ok:
+        state = "SIN_SETUP"
+
+    if state == "ENTRY" and not (double_close_ok and distance_ok and dead_zone_ok):
+        state = "SET_UP"
 
     lots, risk_percent = calc_lots_from_score(
         symbol=symbol,
@@ -181,6 +290,16 @@ def run_world_rows(
         sl=sl,
         score=score if state == "ENTRY" else 0,
     )
+
+    note_parts = [
+        state,
+        f"score {score}",
+        f'RR {score_pack["rr"]:.2f}',
+        sweep["reason"],
+        f"double_close={double_close_ok}",
+        f"distance_ok={distance_ok}",
+        f"dead_zone_ok={dead_zone_ok}",
+    ]
 
     row = {
         "symbol": symbol,
@@ -202,7 +321,7 @@ def run_world_rows(
         "zone_low": zone_low,
         "zone_high": zone_high,
         "candles": candles,
-        "note": f'{state} · score {score} · RR {score_pack["rr"]} · {sweep["reason"]}',
+        "note": " · ".join(note_parts),
     }
 
     analysis = {

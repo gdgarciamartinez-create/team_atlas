@@ -116,11 +116,18 @@ class TradeManager:
 
         symbol = row.get("symbol")
         tf = row.get("tf")
+        world = row.get("world")
+        atlas_mode = row.get("atlas_mode")
 
         if not symbol or not tf:
             return row
 
-        plan = runtime.get_active_plan(symbol, tf)
+        plan = runtime.get_active_plan(
+            symbol,
+            tf,
+            world=world,
+            atlas_mode=atlas_mode,
+        )
 
         if not plan:
             return row
@@ -180,7 +187,14 @@ class TradeManager:
 
                 sl = self._safe_float(plan.get("sl"))
 
-                patch = runtime._close_plan(symbol, tf, "SL", sl)
+                patch = runtime._close_plan(
+                    symbol,
+                    tf,
+                    "SL",
+                    sl,
+                    world=world,
+                    atlas_mode=atlas_mode,
+                )
 
                 merged = self._merge(merged, patch)
 
@@ -196,7 +210,12 @@ class TradeManager:
 
             if self._tp_hit(row, plan.get("side"), plan.get("tp1")):
 
-                patch = runtime.promote_in_trade_to_tp1(symbol, tf)
+                patch = runtime.promote_in_trade_to_tp1(
+                    symbol,
+                    tf,
+                    world=world,
+                    atlas_mode=atlas_mode,
+                )
 
                 merged = self._merge(merged, patch)
 
@@ -212,7 +231,12 @@ class TradeManager:
 
             if self._tp_hit(row, plan.get("side"), plan.get("tp2")):
 
-                patch = runtime.promote_tp1_to_tp2(symbol, tf)
+                patch = runtime.promote_tp1_to_tp2(
+                    symbol,
+                    tf,
+                    world=merged.get("world"),
+                    atlas_mode=merged.get("atlas_mode"),
+                )
 
                 merged = self._merge(merged, patch)
 
